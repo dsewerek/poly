@@ -6,9 +6,10 @@
 <title>polyTranslate</title>
 <style>
   :root{
-    --deep:#04140f; --glass:rgba(255,255,255,.08); --glass-strong:rgba(255,255,255,.14);
-    --border:rgba(180,255,220,.22); --text:#eafff2; --muted:#9fd9bb;
-    --accent:#39d98a; --accent-deep:#1b8a56; --danger:#ff8a7a;
+    --deep:#03110c; --glass:rgba(255,255,255,.06);
+    --border:rgba(180,255,220,.2); --text:#eafff2; --muted:#8fcaa9;
+    --accent:#39d98a; --accent-deep:#159a63; --danger:#ff8a7a;
+    --mx:50%; --my:30%;
   }
   *{box-sizing:border-box;}
   body, button, select, textarea, input{
@@ -17,139 +18,179 @@
   body{
     margin:0; min-height:100vh; color:var(--text);
     background:
-      radial-gradient(circle at 15% 10%, rgba(57,217,138,.35), transparent 45%),
-      radial-gradient(circle at 85% 90%, rgba(27,138,86,.4), transparent 50%),
+      radial-gradient(circle at 15% 10%, rgba(57,217,138,.32), transparent 45%),
+      radial-gradient(circle at 85% 90%, rgba(21,154,99,.38), transparent 50%),
       linear-gradient(160deg, #05201a, #021410 60%, #010b09);
     background-size:200% 200%, 200% 200%, 100% 100%;
-    animation:aurora 22s ease-in-out infinite;
-    display:flex; align-items:center; justify-content:center; padding:24px;
+    animation:aurora 24s ease-in-out infinite;
+    display:flex; align-items:center; justify-content:center; padding:20px;
   }
   @keyframes aurora{
     0%,100%{ background-position:0% 0%, 100% 100%, 0 0; }
     50%{ background-position:30% 25%, 65% 75%, 0 0; }
   }
-  .card{
-    position:relative; overflow:hidden;
-    width:100%; max-width:640px; color:var(--text);
-    background:var(--glass);
+
+  /* ---- glass anatomy: refraction layer + specular layer + content, stacked ---- */
+  .glass{ position:relative; border-radius:26px; isolation:isolate; }
+  .glass-refract{
+    position:absolute; inset:0; border-radius:inherit;
+    backdrop-filter:blur(18px) saturate(170%);
+    -webkit-backdrop-filter:blur(18px) saturate(170%);
+    filter:url(#lens);
+    background:rgba(255,255,255,.05);
+    z-index:0;
+  }
+  .glass-shine{
+    position:absolute; inset:0; border-radius:inherit; z-index:1; pointer-events:none;
+    background:radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,.28), transparent 42%);
+    mix-blend-mode:screen;
+  }
+  .glass{
+    box-shadow:0 18px 50px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.25);
     border:1px solid var(--border);
-    border-radius:22px;
-    padding:32px 28px;
-    backdrop-filter:blur(22px) saturate(160%);
-    -webkit-backdrop-filter:blur(22px) saturate(160%);
-    box-shadow:0 8px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.15);
   }
-  .card::before{
-    content:""; position:absolute; inset:0; border-radius:22px; padding:1px;
-    background:linear-gradient(120deg, transparent 30%, rgba(170,255,215,.6) 50%, transparent 70%);
-    background-size:250% 250%;
-    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite:xor; mask-composite:exclude;
-    animation:sheen 7s linear infinite; pointer-events:none;
-  }
-  @keyframes sheen{ 0%{ background-position:0% 0%; } 100%{ background-position:250% 250%; } }
-  h1{
-    font-size:1.7rem; font-weight:600; font-style:italic;
-    margin:0 0 4px; letter-spacing:.2px; color:#fff;
-  }
-  .sub{ color:var(--muted); font-size:.9rem; margin:0 0 24px; }
-  .connect{
-    border:1px solid var(--border); border-radius:16px; padding:22px; text-align:center;
-    background:rgba(255,255,255,.04);
-  }
+  .glass > .content{ position:relative; z-index:2; }
+
+  .shell{ width:100%; max-width:760px; padding:8px; }
+  .card{ padding:30px 28px; }
+  h1{ font-size:1.7rem; font-weight:600; font-style:italic; margin:0 0 4px; color:#fff; }
+  .sub{ color:var(--muted); font-size:.88rem; margin:0 0 22px; }
+
+  .connect{ padding:22px; text-align:center; }
   .connect p{ margin:0 0 14px; color:var(--muted); font-size:.92rem; }
+
   button{
-    font-size:.92rem; cursor:pointer; border:none;
-    border-radius:12px; padding:10px 18px; color:#062015;
+    font-size:.9rem; cursor:pointer; border:none;
+    border-radius:999px; padding:10px 20px; color:#04140d;
     background:linear-gradient(135deg, var(--accent), var(--accent-deep));
-    box-shadow:0 2px 10px rgba(57,217,138,.35);
+    box-shadow:0 2px 12px rgba(57,217,138,.35);
     transition:opacity .15s, transform .1s;
   }
   button:hover{ opacity:.92; }
-  button:active{ transform:scale(.98); }
-  button:disabled{ opacity:.5; cursor:default; }
+  button:active{ transform:scale(.97); }
   button.ghost{
-    background:rgba(255,255,255,.06); color:var(--muted);
-    border:1px solid var(--border); padding:6px 10px; font-size:.8rem; box-shadow:none;
+    background:rgba(255,255,255,.07); color:var(--muted);
+    border:1px solid var(--border); padding:6px 14px; font-size:.78rem; box-shadow:none;
   }
-  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-  select{
-    font-size:.88rem; padding:8px 9px; border:1px solid var(--border);
-    border-radius:10px; background:rgba(255,255,255,.06); color:var(--text); flex:1;
+
+  .langbar{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .pill-select{
+    flex:1; position:relative; border-radius:999px; overflow:hidden;
+    border:1px solid var(--border); background:rgba(255,255,255,.06);
+  }
+  .pill-select select{
+    width:100%; appearance:none; background:transparent; border:none; color:var(--text);
+    font-size:.86rem; padding:9px 30px 9px 16px; cursor:pointer;
+  }
+  .pill-select::after{
+    content:"⌄"; position:absolute; right:14px; top:50%; transform:translateY(-55%);
+    color:var(--muted); pointer-events:none; font-size:.8rem;
   }
   select option{ background:#062015; color:var(--text); }
   .swap{
-    background:rgba(255,255,255,.08); border:1px solid var(--border); color:var(--text);
-    width:34px; height:34px; border-radius:10px; padding:0; font-size:1rem; line-height:1;
-    box-shadow:none; transition:transform .35s ease;
+    background:rgba(255,255,255,.09); border:1px solid var(--border); color:var(--text);
+    width:34px; height:34px; border-radius:999px; padding:0; font-size:1rem; box-shadow:none;
+    transition:transform .35s ease; flex:0 0 auto;
   }
   .swap.spin{ transform:rotate(180deg); }
-  .counter{ text-align:right; font-size:.72rem; color:var(--muted); margin-top:4px; }
+
+  .panes{ display:grid; grid-template-columns:1fr 1fr; gap:0; border-radius:20px; overflow:hidden; border:1px solid var(--border); }
+  .pane{ position:relative; padding:16px; min-height:180px; background:rgba(255,255,255,.03); }
+  .pane + .pane{ border-left:1px solid var(--border); }
+  @media (max-width:600px){
+    .panes{ grid-template-columns:1fr; }
+    .pane + .pane{ border-left:none; border-top:1px solid var(--border); }
+  }
   textarea{
-    width:100%; font-size:.98rem; border:1px solid var(--border);
-    border-radius:12px; padding:12px; resize:vertical; min-height:110px;
-    background:rgba(255,255,255,.06); color:var(--text);
+    width:100%; height:100%; min-height:120px; font-size:.98rem; border:none; resize:vertical;
+    background:transparent; color:var(--text); outline:none;
   }
   textarea::placeholder{ color:var(--muted); }
-  .out{
-    margin-top:12px; min-height:90px; white-space:pre-wrap; font-size:.98rem;
-    border:1px solid var(--border); border-radius:12px; padding:12px; background:rgba(255,255,255,.05);
-  }
-  .out .detected{ color:var(--accent); font-size:.8rem; margin-bottom:6px; display:block; font-style:italic; }
+  .out{ min-height:120px; white-space:pre-wrap; font-size:.98rem; }
+  .out .detected{ color:var(--accent); font-size:.78rem; margin-bottom:6px; display:block; font-style:italic; }
   .out .pron{ color:#bfe9d3; font-size:.85rem; font-style:italic; margin-top:4px; display:block; }
-  .out .notes{ color:var(--muted); font-size:.85rem; margin-top:10px; border-top:1px dashed var(--border); padding-top:8px; }
-  .out-actions{ display:flex; gap:8px; margin-top:10px; }
+  .out .notes{ color:var(--muted); font-size:.83rem; margin-top:10px; border-top:1px dashed var(--border); padding-top:8px; }
+  .pane-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:.72rem; color:var(--muted); }
+  .icon-row{ display:flex; gap:6px; }
   .icon-btn{
     background:rgba(255,255,255,.08); border:1px solid var(--border); color:var(--text);
-    width:30px; height:30px; border-radius:8px; font-size:.85rem; box-shadow:none; padding:0;
+    width:26px; height:26px; border-radius:999px; font-size:.75rem; box-shadow:none; padding:0;
   }
+  .skeleton{ display:flex; flex-direction:column; gap:8px; }
+  .skeleton span{ display:block; height:10px; border-radius:6px; background:rgba(255,255,255,.1); animation:pulse 1.2s ease-in-out infinite; }
+  .skeleton span:nth-child(2){ width:80%; animation-delay:.15s; }
+  .skeleton span:nth-child(3){ width:55%; animation-delay:.3s; }
+  @keyframes pulse{ 0%,100%{ opacity:.35; } 50%{ opacity:.8; } }
+
+  .toolbar{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
+  label.check{ display:flex; align-items:center; gap:6px; font-size:.8rem; color:var(--muted); }
+  .status{ font-size:.75rem; color:var(--muted); }
+
   .history{ display:flex; flex-wrap:wrap; gap:6px; margin-top:16px; }
   .chip{
     background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--muted);
-    font-size:.75rem; padding:5px 12px; border-radius:999px; cursor:pointer;
+    font-size:.74rem; padding:5px 12px; border-radius:999px; cursor:pointer;
     max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
   .chip:hover{ color:var(--text); border-color:var(--accent); }
-  .actions{ display:flex; align-items:center; justify-content:space-between; margin-top:14px; gap:10px; }
-  label.check{ display:flex; align-items:center; gap:6px; font-size:.85rem; color:var(--muted); }
-  .foot{ margin-top:18px; display:flex; justify-content:space-between; align-items:center; }
-  .err{ color:var(--danger); font-size:.85rem; margin-top:8px; }
+  .foot{ margin-top:18px; display:flex; justify-content:flex-end; }
+  .err{ color:var(--danger); font-size:.83rem; margin-top:8px; }
   .hidden{ display:none !important; }
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>polyTranslate</h1>
-  <p class="sub">Translation that understands tone, idiom, and context — not just words.</p>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="lens" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.009 0.012" numOctaves="2" seed="8" result="noise"/>
+    <feGaussianBlur in="noise" stdDeviation="6" result="soft"/>
+    <feDisplacementMap in="SourceGraphic" in2="soft" scale="22" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
 
-  <div id="connectView" class="connect">
-    <p id="connectMsg">Sign in with your own OpenRouter account to power translations. Your key stays in this browser only.</p>
-    <button id="connectBtn">Connect OpenRouter</button>
-    <div id="connectErr" class="err hidden" style="margin-top:12px;"></div>
-  </div>
+<div class="shell">
+  <div class="glass card">
+    <div class="glass-refract"></div><div class="glass-shine"></div>
+    <div class="content">
+      <h1>polyTranslate</h1>
+      <p class="sub">Translation that understands tone, idiom, and context — not just words.</p>
 
-  <div id="appView" class="hidden">
-    <div class="row">
-      <select id="srcLang"></select>
-      <button class="swap" id="swapBtn" title="Swap languages">⇄</button>
-      <select id="tgtLang"></select>
-    </div>
-    <textarea id="inputText" placeholder="Type or paste text to translate…"></textarea>
-    <div class="counter"><span id="charCount">0</span> characters</div>
-    <div class="actions">
-      <label class="check"><input type="checkbox" id="explainBox"> Explain tone &amp; idioms</label>
-      <button id="translateBtn">Translate</button>
-    </div>
-    <div id="output" class="out"></div>
-    <div id="outActions" class="out-actions hidden">
-      <button class="icon-btn" id="copyBtn" title="Copy translation">⧉</button>
-      <button class="icon-btn" id="speakBtn" title="Speak translation">🔊</button>
-    </div>
-    <div id="errBox" class="err hidden"></div>
-    <div id="history" class="history"></div>
-    <div class="foot">
-      <span></span>
-      <button class="ghost" id="disconnectBtn">Disconnect</button>
+      <div id="connectView" class="connect">
+        <p id="connectMsg">Sign in with your own OpenRouter account to power translations. Your key stays in this browser only.</p>
+        <button id="connectBtn">Connect OpenRouter</button>
+        <div id="connectErr" class="err hidden" style="margin-top:12px;"></div>
+      </div>
+
+      <div id="appView" class="hidden">
+        <div class="langbar">
+          <div class="pill-select"><select id="srcLang"></select></div>
+          <button class="swap" id="swapBtn" title="Swap languages">⇄</button>
+          <div class="pill-select"><select id="tgtLang"></select></div>
+        </div>
+
+        <div class="panes">
+          <div class="pane">
+            <textarea id="inputText" placeholder="Type to translate…"></textarea>
+            <div class="pane-foot"><span id="charCount">0</span><span class="status" id="status"></span></div>
+          </div>
+          <div class="pane">
+            <div id="output" class="out"></div>
+            <div class="pane-foot">
+              <div class="icon-row" id="outActions" class="icon-row hidden">
+                <button class="icon-btn" id="copyBtn" title="Copy">⧉</button>
+                <button class="icon-btn" id="speakBtn" title="Speak">🔊</button>
+              </div>
+              <span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <label class="check"><input type="checkbox" id="explainBox"> Nuance notes</label>
+        </div>
+        <div id="errBox" class="err hidden"></div>
+        <div id="history" class="history"></div>
+        <div class="foot"><button class="ghost" id="disconnectBtn">Disconnect</button></div>
+      </div>
     </div>
   </div>
 </div>
@@ -159,9 +200,17 @@
   const LANGS = ["English","Spanish","French","German","Italian","Portuguese","Russian",
     "Chinese","Japanese","Korean","Arabic","Hindi","Turkish","Greek","Dutch","Polish",
     "Swedish","Czech","Vietnamese","Thai","Indonesian","Hebrew","Ukrainian","Romanian","Hungarian"];
+  const LANG_CODES = {
+    English:"en-US",Spanish:"es-ES",French:"fr-FR",German:"de-DE",Italian:"it-IT",
+    Portuguese:"pt-PT",Russian:"ru-RU",Chinese:"zh-CN",Japanese:"ja-JP",Korean:"ko-KR",
+    Arabic:"ar-SA",Hindi:"hi-IN",Turkish:"tr-TR",Greek:"el-GR",Dutch:"nl-NL",Polish:"pl-PL",
+    Swedish:"sv-SE",Czech:"cs-CZ",Vietnamese:"vi-VN",Thai:"th-TH",Indonesian:"id-ID",
+    Hebrew:"he-IL",Ukrainian:"uk-UA",Romanian:"ro-RO",Hungarian:"hu-HU"
+  };
   const MODEL = "openrouter/free";
   const KEY_STORE = "polytranslate_or_key";
   const VERIFIER_STORE = "polytranslate_pkce_verifier";
+  const HISTORY_STORE = "polytranslate_history";
 
   const connectView = document.getElementById("connectView");
   const appView = document.getElementById("appView");
@@ -171,32 +220,57 @@
   const output = document.getElementById("output");
   const errBox = document.getElementById("errBox");
   const explainBox = document.getElementById("explainBox");
-  const translateBtn = document.getElementById("translateBtn");
+  const statusEl = document.getElementById("status");
+  const charCount = document.getElementById("charCount");
+  const outActions = document.getElementById("outActions");
 
   function populateSelects(){
-    srcLang.innerHTML = '<option value="Auto-detect">Auto-detect</option>' +
+    srcLang.innerHTML = '<option value="Auto-detect">Detect language</option>' +
       LANGS.map(l=>`<option>${l}</option>`).join("");
     tgtLang.innerHTML = LANGS.map(l=>`<option>${l}</option>`).join("");
     tgtLang.value = "Spanish";
   }
   populateSelects();
 
+  /* pointer-driven specular highlight, per glass panel */
+  document.querySelectorAll(".glass").forEach(panel=>{
+    panel.addEventListener("pointermove", (e)=>{
+      const r = panel.getBoundingClientRect();
+      panel.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100) + "%");
+      panel.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100) + "%");
+    });
+  });
+
   document.getElementById("swapBtn").addEventListener("click", (e)=>{
     if(srcLang.value === "Auto-detect") return;
     const a = srcLang.value, b = tgtLang.value;
     srcLang.value = b; tgtLang.value = a;
     e.currentTarget.classList.toggle("spin");
+    scheduleTranslate(true);
   });
+  srcLang.addEventListener("change", ()=>scheduleTranslate(true));
+  tgtLang.addEventListener("change", ()=>scheduleTranslate(true));
 
-  const charCount = document.getElementById("charCount");
-  inputText.addEventListener("input", ()=>{ charCount.textContent = inputText.value.length; });
+  inputText.addEventListener("input", ()=>{
+    charCount.textContent = inputText.value.length;
+    scheduleTranslate(false);
+  });
+  explainBox.addEventListener("change", ()=>scheduleTranslate(true));
+
+  let debounceTimer = null;
+  let inFlight = null;
+  function scheduleTranslate(immediate){
+    clearTimeout(debounceTimer);
+    if(!inputText.value.trim()){ output.textContent = ""; outActions.classList.add("hidden"); statusEl.textContent = ""; return; }
+    statusEl.textContent = "typing…";
+    debounceTimer = setTimeout(translate, immediate ? 0 : 450);
+  }
 
   function base64url(bytes){
     return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   }
   async function sha256(str){
-    const data = new TextEncoder().encode(str);
-    const digest = await crypto.subtle.digest('SHA-256', data);
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
     return base64url(new Uint8Array(digest));
   }
   function randomVerifier(){
@@ -207,18 +281,15 @@
 
   function showConnectErr(msg){
     const box = document.getElementById("connectErr");
-    box.textContent = msg;
-    box.classList.remove("hidden");
+    box.textContent = msg; box.classList.remove("hidden");
   }
-  function clearConnectErr(){
-    document.getElementById("connectErr").classList.add("hidden");
-  }
+  function clearConnectErr(){ document.getElementById("connectErr").classList.add("hidden"); }
 
   async function startOAuth(){
     clearConnectErr();
     try{
       if(location.protocol === "file:"){
-        showConnectErr("This page needs to be served over https (e.g. from GitHub Pages), not opened directly as a local file — OpenRouter can't redirect back to a file:// address.");
+        showConnectErr("This page needs to be served over https (e.g. GitHub Pages), not opened as a local file — OpenRouter can't redirect back to a file:// address.");
         return;
       }
       let challenge = null;
@@ -233,28 +304,19 @@
       let url = `https://openrouter.ai/auth?callback_url=${encodeURIComponent(callback)}`;
       if(challenge) url += `&code_challenge=${challenge}&code_challenge_method=S256`;
       window.location.href = url;
-    }catch(e){
-      showConnectErr("Couldn't start sign-in: " + e.message);
-    }
+    }catch(e){ showConnectErr("Couldn't start sign-in: " + e.message); }
   }
 
   async function exchangeCode(code){
     const verifier = sessionStorage.getItem(VERIFIER_STORE);
     const body = { code };
-    if(verifier){
-      body.code_verifier = verifier;
-      body.code_challenge_method = "S256";
-    }
+    if(verifier){ body.code_verifier = verifier; body.code_challenge_method = "S256"; }
     let res;
     try{
       res = await fetch("https://openrouter.ai/api/v1/auth/keys", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify(body)
+        method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)
       });
-    }catch(e){
-      throw new Error("Network/CORS error reaching OpenRouter — check your connection and try again.");
-    }
+    }catch(e){ throw new Error("Network/CORS error reaching OpenRouter."); }
     sessionStorage.removeItem(VERIFIER_STORE);
     if(!res.ok){
       const t = await res.text().catch(()=> "");
@@ -265,53 +327,33 @@
     localStorage.setItem(KEY_STORE, data.key);
   }
 
-  function showApp(){
-    connectView.classList.add("hidden");
-    appView.classList.remove("hidden");
-  }
-  function showConnect(){
-    connectView.classList.remove("hidden");
-    appView.classList.add("hidden");
-  }
+  function showApp(){ connectView.classList.add("hidden"); appView.classList.remove("hidden"); }
+  function showConnect(){ connectView.classList.remove("hidden"); appView.classList.add("hidden"); }
 
   async function init(){
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     if(code){
-      try{
-        await exchangeCode(code);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }catch(e){
-        showConnectErr("Connection failed: " + e.message);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
+      try{ await exchangeCode(code); }
+      catch(e){ showConnectErr("Connection failed: " + e.message); }
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
     if(localStorage.getItem(KEY_STORE)) showApp(); else showConnect();
+    renderHistory();
   }
 
   document.getElementById("connectBtn").addEventListener("click", startOAuth);
   document.getElementById("disconnectBtn").addEventListener("click", ()=>{
-    localStorage.removeItem(KEY_STORE);
-    showConnect();
+    localStorage.removeItem(KEY_STORE); showConnect();
   });
-
-  const LANG_CODES = {
-    English:"en-US",Spanish:"es-ES",French:"fr-FR",German:"de-DE",Italian:"it-IT",
-    Portuguese:"pt-PT",Russian:"ru-RU",Chinese:"zh-CN",Japanese:"ja-JP",Korean:"ko-KR",
-    Arabic:"ar-SA",Hindi:"hi-IN",Turkish:"tr-TR",Greek:"el-GR",Dutch:"nl-NL",Polish:"pl-PL",
-    Swedish:"sv-SE",Czech:"cs-CZ",Vietnamese:"vi-VN",Thai:"th-TH",Indonesian:"id-ID",
-    Hebrew:"he-IL",Ukrainian:"uk-UA",Romanian:"ro-RO",Hungarian:"hu-HU"
-  };
-  const HISTORY_STORE = "polytranslate_history";
 
   function buildSystemPrompt(explain){
     return `You are a professional translator with deep fluency in idiom, register, and cultural context. `+
-      `Translate naturally the way a skilled human translator would, adapting idioms rather than translating them literally, and preserving tone (formal, casual, humorous, etc). `+
-      `Respond with ONLY raw JSON, no markdown fences, matching exactly this shape: `+
-      `{"detected":"<detected source language, or empty string if source was not auto>","translation":"<the translated text>",`+
-      `"pronunciation":"<romanized/phonetic pronunciation of the translation if the target script is non-Latin, else empty string>"` +
-      (explain ? `,"notes":"<1-3 short sentences on any idioms, tone choices, or ambiguities worth knowing>"` : ``) +
-      `}`;
+      `Translate naturally the way a skilled human translator would, adapting idioms rather than translating them literally, preserving tone. `+
+      `Respond with ONLY raw JSON, no markdown fences: `+
+      `{"detected":"<detected source language or empty string>","translation":"<translated text>",`+
+      `"pronunciation":"<romanized pronunciation if target script is non-Latin, else empty string>"` +
+      (explain ? `,"notes":"<1-2 short sentences on idiom/tone choices>"` : ``) + `}`;
   }
 
   async function translate(){
@@ -320,28 +362,27 @@
     const key = localStorage.getItem(KEY_STORE);
     if(!key){ showConnect(); return; }
 
+    if(inFlight) inFlight.abort();
+    const controller = new AbortController();
+    inFlight = controller;
+
     errBox.classList.add("hidden");
-    translateBtn.disabled = true;
-    translateBtn.textContent = "Translating…";
-    output.textContent = "";
+    statusEl.textContent = "translating…";
+    output.innerHTML = '<div class="skeleton"><span></span><span></span><span></span></div>';
 
     const explain = explainBox.checked;
-    const src = srcLang.value;
-    const tgt = tgtLang.value;
+    const src = srcLang.value, tgt = tgtLang.value;
     const userMsg = `Source language: ${src}\nTarget language: ${tgt}\nText:\n"""\n${text}\n"""`;
 
     try{
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + key
-        },
+        method:"POST", signal:controller.signal,
+        headers:{ "Content-Type":"application/json", "Authorization":"Bearer " + key },
         body: JSON.stringify({
           model: MODEL,
-          messages: [
-            { role: "system", content: buildSystemPrompt(explain) },
-            { role: "user", content: userMsg }
+          messages:[
+            { role:"system", content: buildSystemPrompt(explain) },
+            { role:"user", content: userMsg }
           ]
         })
       });
@@ -352,23 +393,21 @@
       const data = await res.json();
       const raw = data.content ? data.content : (data.choices && data.choices[0].message.content);
       renderResult(raw, src, tgt, text);
+      statusEl.textContent = "";
     }catch(e){
-      errBox.textContent = e.message;
-      errBox.classList.remove("hidden");
-    }finally{
-      translateBtn.disabled = false;
-      translateBtn.textContent = "Translate";
+      if(e.name === "AbortError") return;
+      errBox.textContent = e.message; errBox.classList.remove("hidden");
+      statusEl.textContent = "";
+      output.textContent = "";
     }
   }
 
   function loadHistory(){
-    try{ return JSON.parse(localStorage.getItem(HISTORY_STORE) || "[]"); }
-    catch(e){ return []; }
+    try{ return JSON.parse(localStorage.getItem(HISTORY_STORE) || "[]"); } catch(e){ return []; }
   }
   function saveToHistory(entry){
-    const list = loadHistory();
-    list.unshift(entry);
-    localStorage.setItem(HISTORY_STORE, JSON.stringify(list.slice(0, 6)));
+    const list = loadHistory(); list.unshift(entry);
+    localStorage.setItem(HISTORY_STORE, JSON.stringify(list.slice(0,6)));
     renderHistory();
   }
   function renderHistory(){
@@ -377,14 +416,11 @@
     box.innerHTML = "";
     list.forEach(item=>{
       const chip = document.createElement("button");
-      chip.className = "chip";
-      chip.type = "button";
+      chip.className = "chip"; chip.type = "button";
       chip.textContent = `${item.src}→${item.tgt}: ${item.text.slice(0,24)}`;
       chip.addEventListener("click", ()=>{
-        inputText.value = item.text;
-        charCount.textContent = item.text.length;
-        if(LANG_CODES[item.src] || item.src === "Auto-detect") srcLang.value = item.src;
-        tgtLang.value = item.tgt;
+        inputText.value = item.text; charCount.textContent = item.text.length;
+        srcLang.value = item.src; tgtLang.value = item.tgt;
         renderResult(JSON.stringify(item.result), item.src, item.tgt, null);
       });
       box.appendChild(chip);
@@ -399,8 +435,7 @@
     if(!currentUtteranceText || !window.speechSynthesis) return;
     const utter = new SpeechSynthesisUtterance(currentUtteranceText);
     utter.lang = currentUtteranceLang;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(utter);
+    speechSynthesis.cancel(); speechSynthesis.speak(utter);
   });
 
   function renderResult(raw, src, tgt, sourceText){
@@ -408,50 +443,32 @@
     try{
       const cleaned = raw.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```$/,'');
       parsed = JSON.parse(cleaned);
-    }catch(e){ /* fall through to raw display */ }
+    }catch(e){}
 
     output.innerHTML = "";
-    const outActions = document.getElementById("outActions");
     if(parsed && parsed.translation){
       if(src === "Auto-detect" && parsed.detected){
-        const d = document.createElement("span");
-        d.className = "detected";
-        d.textContent = "Detected: " + parsed.detected;
-        output.appendChild(d);
+        const d = document.createElement("span"); d.className = "detected";
+        d.textContent = "Detected: " + parsed.detected; output.appendChild(d);
       }
-      const t = document.createElement("div");
-      t.textContent = parsed.translation;
-      output.appendChild(t);
+      const t = document.createElement("div"); t.textContent = parsed.translation; output.appendChild(t);
       if(parsed.pronunciation){
-        const p = document.createElement("span");
-        p.className = "pron";
-        p.textContent = parsed.pronunciation;
-        output.appendChild(p);
+        const p = document.createElement("span"); p.className = "pron";
+        p.textContent = parsed.pronunciation; output.appendChild(p);
       }
       if(parsed.notes){
-        const n = document.createElement("div");
-        n.className = "notes";
-        n.textContent = parsed.notes;
-        output.appendChild(n);
+        const n = document.createElement("div"); n.className = "notes";
+        n.textContent = parsed.notes; output.appendChild(n);
       }
       currentUtteranceText = parsed.translation;
       currentUtteranceLang = LANG_CODES[tgt] || "en-US";
       outActions.classList.remove("hidden");
-      if(sourceText){
-        saveToHistory({ src, tgt, text: sourceText, result: parsed });
-      }
+      if(sourceText) saveToHistory({ src, tgt, text: sourceText, result: parsed });
     } else {
-      output.textContent = raw;
-      outActions.classList.add("hidden");
+      output.textContent = raw; outActions.classList.add("hidden");
     }
   }
 
-  translateBtn.addEventListener("click", translate);
-  inputText.addEventListener("keydown", (e)=>{
-    if(e.key === "Enter" && (e.metaKey || e.ctrlKey)) translate();
-  });
-
-  renderHistory();
   init();
 })();
 </script>
