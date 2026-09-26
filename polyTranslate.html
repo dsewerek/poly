@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>polyTranslate</title>
+<style>
+  :root{
+    --deep:#04140f; --glass:rgba(255,255,255,.08); --glass-strong:rgba(255,255,255,.14);
+    --border:rgba(180,255,220,.22); --text:#eafff2; --muted:#9fd9bb;
+    --accent:#39d98a; --accent-deep:#1b8a56; --danger:#ff8a7a;
+  }
+  *{box-sizing:border-box;}
+  body, button, select, textarea, input{
+    font-family:Georgia,"Iowan Old Style","Source Serif Pro",serif;
+  }
+  body{
+    margin:0; min-height:100vh; color:var(--text);
+    background:
+      radial-gradient(circle at 15% 10%, rgba(57,217,138,.35), transparent 45%),
+      radial-gradient(circle at 85% 90%, rgba(27,138,86,.4), transparent 50%),
+      linear-gradient(160deg, #05201a, #021410 60%, #010b09);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card{
+    width:100%; max-width:640px; color:var(--text);
+    background:var(--glass);
+    border:1px solid var(--border);
+    border-radius:22px;
+    padding:32px 28px;
+    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    box-shadow:0 8px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  h1{
+    font-size:1.7rem; font-weight:600; font-style:italic;
+    margin:0 0 4px; letter-spacing:.2px; color:#fff;
+  }
+  .sub{ color:var(--muted); font-size:.9rem; margin:0 0 24px; }
+  .connect{
+    border:1px solid var(--border); border-radius:16px; padding:22px; text-align:center;
+    background:rgba(255,255,255,.04);
+  }
+  .connect p{ margin:0 0 14px; color:var(--muted); font-size:.92rem; }
+  button{
+    font-size:.92rem; cursor:pointer; border:none;
+    border-radius:12px; padding:10px 18px; color:#062015;
+    background:linear-gradient(135deg, var(--accent), var(--accent-deep));
+    box-shadow:0 2px 10px rgba(57,217,138,.35);
+    transition:opacity .15s, transform .1s;
+  }
+  button:hover{ opacity:.92; }
+  button:active{ transform:scale(.98); }
+  button:disabled{ opacity:.5; cursor:default; }
+  button.ghost{
+    background:rgba(255,255,255,.06); color:var(--muted);
+    border:1px solid var(--border); padding:6px 10px; font-size:.8rem; box-shadow:none;
+  }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  select{
+    font-size:.88rem; padding:8px 9px; border:1px solid var(--border);
+    border-radius:10px; background:rgba(255,255,255,.06); color:var(--text); flex:1;
+  }
+  select option{ background:#062015; color:var(--text); }
+  .swap{
+    background:rgba(255,255,255,.08); border:1px solid var(--border); color:var(--text);
+    width:34px; height:34px; border-radius:10px; padding:0; font-size:1rem; line-height:1;
+    box-shadow:none;
+  }
+  textarea{
+    width:100%; font-size:.98rem; border:1px solid var(--border);
+    border-radius:12px; padding:12px; resize:vertical; min-height:110px;
+    background:rgba(255,255,255,.06); color:var(--text);
+  }
+  textarea::placeholder{ color:var(--muted); }
+  .out{
+    margin-top:12px; min-height:90px; white-space:pre-wrap; font-size:.98rem;
+    border:1px solid var(--border); border-radius:12px; padding:12px; background:rgba(255,255,255,.05);
+  }
+  .out .detected{ color:var(--accent); font-size:.8rem; margin-bottom:6px; display:block; font-style:italic; }
+  .out .notes{ color:var(--muted); font-size:.85rem; margin-top:10px; border-top:1px dashed var(--border); padding-top:8px; }
+  .actions{ display:flex; align-items:center; justify-content:space-between; margin-top:14px; gap:10px; }
+  label.check{ display:flex; align-items:center; gap:6px; font-size:.85rem; color:var(--muted); }
+  .foot{ margin-top:18px; display:flex; justify-content:space-between; align-items:center; }
+  .err{ color:var(--danger); font-size:.85rem; margin-top:8px; }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>polyTranslate</h1>
+  <p class="sub">Translation that understands tone, idiom, and context — not just words.</p>
+
+  <div id="connectView" class="connect">
+    <p id="connectMsg">Sign in with your own OpenRouter account to power translations. Your key stays in this browser only.</p>
+    <button id="connectBtn">Connect OpenRouter</button>
+    <div id="connectErr" class="err hidden" style="margin-top:12px;"></div>
+  </div>
+
+  <div id="appView" class="hidden">
+    <div class="row">
+      <select id="srcLang"></select>
+      <button class="swap" id="swapBtn" title="Swap languages">⇄</button>
+      <select id="tgtLang"></select>
+    </div>
+    <textarea id="inputText" placeholder="Type or paste text to translate…"></textarea>
+    <div class="actions">
+      <label class="check"><input type="checkbox" id="explainBox"> Explain tone &amp; idioms</label>
+      <button id="translateBtn">Translate</button>
+    </div>
+    <div id="output" class="out"></div>
+    <div id="errBox" class="err hidden"></div>
+    <div class="foot">
+      <span></span>
+      <button class="ghost" id="disconnectBtn">Disconnect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const LANGS = ["English","Spanish","French","German","Italian","Portuguese","Russian",
+    "Chinese","Japanese","Korean","Arabic","Hindi","Turkish","Greek","Dutch","Polish",
+    "Swedish","Czech","Vietnamese","Thai","Indonesian","Hebrew","Ukrainian","Romanian","Hungarian"];
+  const MODEL = "openrouter/free";
+  const KEY_STORE = "polytranslate_or_key";
+  const VERIFIER_STORE = "polytranslate_pkce_verifier";
+
+  const connectView = document.getElementById("connectView");
+  const appView = document.getElementById("appView");
+  const srcLang = document.getElementById("srcLang");
+  const tgtLang = document.getElementById("tgtLang");
+  const inputText = document.getElementById("inputText");
+  const output = document.getElementById("output");
+  const errBox = document.getElementById("errBox");
+  const explainBox = document.getElementById("explainBox");
+  const translateBtn = document.getElementById("translateBtn");
+
+  function populateSelects(){
+    srcLang.innerHTML = '<option value="Auto-detect">Auto-detect</option>' +
+      LANGS.map(l=>`<option>${l}</option>`).join("");
+    tgtLang.innerHTML = LANGS.map(l=>`<option>${l}</option>`).join("");
+    tgtLang.value = "Spanish";
+  }
+  populateSelects();
+
+  document.getElementById("swapBtn").addEventListener("click", ()=>{
+    if(srcLang.value === "Auto-detect") return;
+    const a = srcLang.value, b = tgtLang.value;
+    srcLang.value = b; tgtLang.value = a;
+  });
+
+  function base64url(bytes){
+    return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  async function sha256(str){
+    const data = new TextEncoder().encode(str);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return base64url(new Uint8Array(digest));
+  }
+  function randomVerifier(){
+    const bytes = new Uint8Array(64);
+    crypto.getRandomValues(bytes);
+    return base64url(bytes);
+  }
+
+  function showConnectErr(msg){
+    const box = document.getElementById("connectErr");
+    box.textContent = msg;
+    box.classList.remove("hidden");
+  }
+  function clearConnectErr(){
+    document.getElementById("connectErr").classList.add("hidden");
+  }
+
+  async function startOAuth(){
+    clearConnectErr();
+    try{
+      if(location.protocol === "file:"){
+        showConnectErr("This page needs to be served over https (e.g. from GitHub Pages), not opened directly as a local file — OpenRouter can't redirect back to a file:// address.");
+        return;
+      }
+      let challenge = null;
+      if(window.isSecureContext && window.crypto && window.crypto.subtle){
+        const verifier = randomVerifier();
+        sessionStorage.setItem(VERIFIER_STORE, verifier);
+        challenge = await sha256(verifier);
+      } else {
+        sessionStorage.removeItem(VERIFIER_STORE);
+      }
+      const callback = window.location.origin + window.location.pathname;
+      let url = `https://openrouter.ai/auth?callback_url=${encodeURIComponent(callback)}`;
+      if(challenge) url += `&code_challenge=${challenge}&code_challenge_method=S256`;
+      window.location.href = url;
+    }catch(e){
+      showConnectErr("Couldn't start sign-in: " + e.message);
+    }
+  }
+
+  async function exchangeCode(code){
+    const verifier = sessionStorage.getItem(VERIFIER_STORE);
+    const body = { code };
+    if(verifier){
+      body.code_verifier = verifier;
+      body.code_challenge_method = "S256";
+    }
+    let res;
+    try{
+      res = await fetch("https://openrouter.ai/api/v1/auth/keys", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(body)
+      });
+    }catch(e){
+      throw new Error("Network/CORS error reaching OpenRouter — check your connection and try again.");
+    }
+    sessionStorage.removeItem(VERIFIER_STORE);
+    if(!res.ok){
+      const t = await res.text().catch(()=> "");
+      throw new Error(`OpenRouter rejected the exchange (${res.status}): ${t.slice(0,200) || "no details"}`);
+    }
+    const data = await res.json();
+    if(!data.key) throw new Error("OpenRouter didn't return a key.");
+    localStorage.setItem(KEY_STORE, data.key);
+  }
+
+  function showApp(){
+    connectView.classList.add("hidden");
+    appView.classList.remove("hidden");
+  }
+  function showConnect(){
+    connectView.classList.remove("hidden");
+    appView.classList.add("hidden");
+  }
+
+  async function init(){
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if(code){
+      try{
+        await exchangeCode(code);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }catch(e){
+        showConnectErr("Connection failed: " + e.message);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+    if(localStorage.getItem(KEY_STORE)) showApp(); else showConnect();
+  }
+
+  document.getElementById("connectBtn").addEventListener("click", startOAuth);
+  document.getElementById("disconnectBtn").addEventListener("click", ()=>{
+    localStorage.removeItem(KEY_STORE);
+    showConnect();
+  });
+
+  function buildSystemPrompt(explain){
+    return `You are a professional translator with deep fluency in idiom, register, and cultural context. `+
+      `Translate naturally the way a skilled human translator would, adapting idioms rather than translating them literally, and preserving tone (formal, casual, humorous, etc). `+
+      `Respond with ONLY raw JSON, no markdown fences, matching exactly this shape: `+
+      `{"detected":"<detected source language, or empty string if source was not auto>","translation":"<the translated text>"` +
+      (explain ? `,"notes":"<1-3 short sentences on any idioms, tone choices, or ambiguities worth knowing>"` : ``) +
+      `}`;
+  }
+
+  async function translate(){
+    const text = inputText.value.trim();
+    if(!text) return;
+    const key = localStorage.getItem(KEY_STORE);
+    if(!key){ showConnect(); return; }
+
+    errBox.classList.add("hidden");
+    translateBtn.disabled = true;
+    translateBtn.textContent = "Translating…";
+    output.textContent = "";
+
+    const explain = explainBox.checked;
+    const src = srcLang.value;
+    const tgt = tgtLang.value;
+    const userMsg = `Source language: ${src}\nTarget language: ${tgt}\nText:\n"""\n${text}\n"""`;
+
+    try{
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + key
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            { role: "system", content: buildSystemPrompt(explain) },
+            { role: "user", content: userMsg }
+          ]
+        })
+      });
+      if(!res.ok){
+        const t = await res.text();
+        throw new Error(`API error (${res.status}): ${t.slice(0,200)}`);
+      }
+      const data = await res.json();
+      const raw = data.content ? data.content : (data.choices && data.choices[0].message.content);
+      renderResult(raw, src);
+    }catch(e){
+      errBox.textContent = e.message;
+      errBox.classList.remove("hidden");
+    }finally{
+      translateBtn.disabled = false;
+      translateBtn.textContent = "Translate";
+    }
+  }
+
+  function renderResult(raw, src){
+    let parsed = null;
+    try{
+      const cleaned = raw.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```$/,'');
+      parsed = JSON.parse(cleaned);
+    }catch(e){ /* fall through to raw display */ }
+
+    output.innerHTML = "";
+    if(parsed && parsed.translation){
+      if(src === "Auto-detect" && parsed.detected){
+        const d = document.createElement("span");
+        d.className = "detected";
+        d.textContent = "Detected: " + parsed.detected;
+        output.appendChild(d);
+      }
+      const t = document.createElement("div");
+      t.textContent = parsed.translation;
+      output.appendChild(t);
+      if(parsed.notes){
+        const n = document.createElement("div");
+        n.className = "notes";
+        n.textContent = parsed.notes;
+        output.appendChild(n);
+      }
+    } else {
+      output.textContent = raw;
+    }
+  }
+
+  translateBtn.addEventListener("click", translate);
+  inputText.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" && (e.metaKey || e.ctrlKey)) translate();
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
