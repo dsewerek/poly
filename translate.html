@@ -20,9 +20,16 @@
       radial-gradient(circle at 15% 10%, rgba(57,217,138,.35), transparent 45%),
       radial-gradient(circle at 85% 90%, rgba(27,138,86,.4), transparent 50%),
       linear-gradient(160deg, #05201a, #021410 60%, #010b09);
+    background-size:200% 200%, 200% 200%, 100% 100%;
+    animation:aurora 22s ease-in-out infinite;
     display:flex; align-items:center; justify-content:center; padding:24px;
   }
+  @keyframes aurora{
+    0%,100%{ background-position:0% 0%, 100% 100%, 0 0; }
+    50%{ background-position:30% 25%, 65% 75%, 0 0; }
+  }
   .card{
+    position:relative; overflow:hidden;
     width:100%; max-width:640px; color:var(--text);
     background:var(--glass);
     border:1px solid var(--border);
@@ -32,6 +39,15 @@
     -webkit-backdrop-filter:blur(22px) saturate(160%);
     box-shadow:0 8px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.15);
   }
+  .card::before{
+    content:""; position:absolute; inset:0; border-radius:22px; padding:1px;
+    background:linear-gradient(120deg, transparent 30%, rgba(170,255,215,.6) 50%, transparent 70%);
+    background-size:250% 250%;
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    animation:sheen 7s linear infinite; pointer-events:none;
+  }
+  @keyframes sheen{ 0%{ background-position:0% 0%; } 100%{ background-position:250% 250%; } }
   h1{
     font-size:1.7rem; font-weight:600; font-style:italic;
     margin:0 0 4px; letter-spacing:.2px; color:#fff;
@@ -65,8 +81,10 @@
   .swap{
     background:rgba(255,255,255,.08); border:1px solid var(--border); color:var(--text);
     width:34px; height:34px; border-radius:10px; padding:0; font-size:1rem; line-height:1;
-    box-shadow:none;
+    box-shadow:none; transition:transform .35s ease;
   }
+  .swap.spin{ transform:rotate(180deg); }
+  .counter{ text-align:right; font-size:.72rem; color:var(--muted); margin-top:4px; }
   textarea{
     width:100%; font-size:.98rem; border:1px solid var(--border);
     border-radius:12px; padding:12px; resize:vertical; min-height:110px;
@@ -78,7 +96,20 @@
     border:1px solid var(--border); border-radius:12px; padding:12px; background:rgba(255,255,255,.05);
   }
   .out .detected{ color:var(--accent); font-size:.8rem; margin-bottom:6px; display:block; font-style:italic; }
+  .out .pron{ color:#bfe9d3; font-size:.85rem; font-style:italic; margin-top:4px; display:block; }
   .out .notes{ color:var(--muted); font-size:.85rem; margin-top:10px; border-top:1px dashed var(--border); padding-top:8px; }
+  .out-actions{ display:flex; gap:8px; margin-top:10px; }
+  .icon-btn{
+    background:rgba(255,255,255,.08); border:1px solid var(--border); color:var(--text);
+    width:30px; height:30px; border-radius:8px; font-size:.85rem; box-shadow:none; padding:0;
+  }
+  .history{ display:flex; flex-wrap:wrap; gap:6px; margin-top:16px; }
+  .chip{
+    background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--muted);
+    font-size:.75rem; padding:5px 12px; border-radius:999px; cursor:pointer;
+    max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .chip:hover{ color:var(--text); border-color:var(--accent); }
   .actions{ display:flex; align-items:center; justify-content:space-between; margin-top:14px; gap:10px; }
   label.check{ display:flex; align-items:center; gap:6px; font-size:.85rem; color:var(--muted); }
   .foot{ margin-top:18px; display:flex; justify-content:space-between; align-items:center; }
@@ -104,12 +135,18 @@
       <select id="tgtLang"></select>
     </div>
     <textarea id="inputText" placeholder="Type or paste text to translate…"></textarea>
+    <div class="counter"><span id="charCount">0</span> characters</div>
     <div class="actions">
       <label class="check"><input type="checkbox" id="explainBox"> Explain tone &amp; idioms</label>
       <button id="translateBtn">Translate</button>
     </div>
     <div id="output" class="out"></div>
+    <div id="outActions" class="out-actions hidden">
+      <button class="icon-btn" id="copyBtn" title="Copy translation">⧉</button>
+      <button class="icon-btn" id="speakBtn" title="Speak translation">🔊</button>
+    </div>
     <div id="errBox" class="err hidden"></div>
+    <div id="history" class="history"></div>
     <div class="foot">
       <span></span>
       <button class="ghost" id="disconnectBtn">Disconnect</button>
@@ -144,11 +181,15 @@
   }
   populateSelects();
 
-  document.getElementById("swapBtn").addEventListener("click", ()=>{
+  document.getElementById("swapBtn").addEventListener("click", (e)=>{
     if(srcLang.value === "Auto-detect") return;
     const a = srcLang.value, b = tgtLang.value;
     srcLang.value = b; tgtLang.value = a;
+    e.currentTarget.classList.toggle("spin");
   });
+
+  const charCount = document.getElementById("charCount");
+  inputText.addEventListener("input", ()=>{ charCount.textContent = inputText.value.length; });
 
   function base64url(bytes){
     return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -254,11 +295,21 @@
     showConnect();
   });
 
+  const LANG_CODES = {
+    English:"en-US",Spanish:"es-ES",French:"fr-FR",German:"de-DE",Italian:"it-IT",
+    Portuguese:"pt-PT",Russian:"ru-RU",Chinese:"zh-CN",Japanese:"ja-JP",Korean:"ko-KR",
+    Arabic:"ar-SA",Hindi:"hi-IN",Turkish:"tr-TR",Greek:"el-GR",Dutch:"nl-NL",Polish:"pl-PL",
+    Swedish:"sv-SE",Czech:"cs-CZ",Vietnamese:"vi-VN",Thai:"th-TH",Indonesian:"id-ID",
+    Hebrew:"he-IL",Ukrainian:"uk-UA",Romanian:"ro-RO",Hungarian:"hu-HU"
+  };
+  const HISTORY_STORE = "polytranslate_history";
+
   function buildSystemPrompt(explain){
     return `You are a professional translator with deep fluency in idiom, register, and cultural context. `+
       `Translate naturally the way a skilled human translator would, adapting idioms rather than translating them literally, and preserving tone (formal, casual, humorous, etc). `+
       `Respond with ONLY raw JSON, no markdown fences, matching exactly this shape: `+
-      `{"detected":"<detected source language, or empty string if source was not auto>","translation":"<the translated text>"` +
+      `{"detected":"<detected source language, or empty string if source was not auto>","translation":"<the translated text>",`+
+      `"pronunciation":"<romanized/phonetic pronunciation of the translation if the target script is non-Latin, else empty string>"` +
       (explain ? `,"notes":"<1-3 short sentences on any idioms, tone choices, or ambiguities worth knowing>"` : ``) +
       `}`;
   }
@@ -300,7 +351,7 @@
       }
       const data = await res.json();
       const raw = data.content ? data.content : (data.choices && data.choices[0].message.content);
-      renderResult(raw, src);
+      renderResult(raw, src, tgt, text);
     }catch(e){
       errBox.textContent = e.message;
       errBox.classList.remove("hidden");
@@ -310,7 +361,49 @@
     }
   }
 
-  function renderResult(raw, src){
+  function loadHistory(){
+    try{ return JSON.parse(localStorage.getItem(HISTORY_STORE) || "[]"); }
+    catch(e){ return []; }
+  }
+  function saveToHistory(entry){
+    const list = loadHistory();
+    list.unshift(entry);
+    localStorage.setItem(HISTORY_STORE, JSON.stringify(list.slice(0, 6)));
+    renderHistory();
+  }
+  function renderHistory(){
+    const list = loadHistory();
+    const box = document.getElementById("history");
+    box.innerHTML = "";
+    list.forEach(item=>{
+      const chip = document.createElement("button");
+      chip.className = "chip";
+      chip.type = "button";
+      chip.textContent = `${item.src}→${item.tgt}: ${item.text.slice(0,24)}`;
+      chip.addEventListener("click", ()=>{
+        inputText.value = item.text;
+        charCount.textContent = item.text.length;
+        if(LANG_CODES[item.src] || item.src === "Auto-detect") srcLang.value = item.src;
+        tgtLang.value = item.tgt;
+        renderResult(JSON.stringify(item.result), item.src, item.tgt, null);
+      });
+      box.appendChild(chip);
+    });
+  }
+
+  let currentUtteranceText = "", currentUtteranceLang = "en-US";
+  document.getElementById("copyBtn").addEventListener("click", ()=>{
+    navigator.clipboard.writeText(currentUtteranceText).catch(()=>{});
+  });
+  document.getElementById("speakBtn").addEventListener("click", ()=>{
+    if(!currentUtteranceText || !window.speechSynthesis) return;
+    const utter = new SpeechSynthesisUtterance(currentUtteranceText);
+    utter.lang = currentUtteranceLang;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utter);
+  });
+
+  function renderResult(raw, src, tgt, sourceText){
     let parsed = null;
     try{
       const cleaned = raw.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```$/,'');
@@ -318,6 +411,7 @@
     }catch(e){ /* fall through to raw display */ }
 
     output.innerHTML = "";
+    const outActions = document.getElementById("outActions");
     if(parsed && parsed.translation){
       if(src === "Auto-detect" && parsed.detected){
         const d = document.createElement("span");
@@ -328,14 +422,27 @@
       const t = document.createElement("div");
       t.textContent = parsed.translation;
       output.appendChild(t);
+      if(parsed.pronunciation){
+        const p = document.createElement("span");
+        p.className = "pron";
+        p.textContent = parsed.pronunciation;
+        output.appendChild(p);
+      }
       if(parsed.notes){
         const n = document.createElement("div");
         n.className = "notes";
         n.textContent = parsed.notes;
         output.appendChild(n);
       }
+      currentUtteranceText = parsed.translation;
+      currentUtteranceLang = LANG_CODES[tgt] || "en-US";
+      outActions.classList.remove("hidden");
+      if(sourceText){
+        saveToHistory({ src, tgt, text: sourceText, result: parsed });
+      }
     } else {
       output.textContent = raw;
+      outActions.classList.add("hidden");
     }
   }
 
@@ -344,6 +451,7 @@
     if(e.key === "Enter" && (e.metaKey || e.ctrlKey)) translate();
   });
 
+  renderHistory();
   init();
 })();
 </script>
