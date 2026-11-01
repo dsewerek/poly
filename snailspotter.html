@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SnailSpotter 🐌</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#111;color:#eee;font-family:system-ui,sans-serif}
+#app{display:flex;flex-direction:column;height:100%}
+#stage{position:relative;flex:1;min-height:0;background:#000}
+#v,#o{position:absolute;inset:0;width:100%;height:100%}
+#v{object-fit:contain}
+#st{padding:6px 10px;font-size:13px;background:#1b1b1b;min-height:30px}
+#bar{display:flex;gap:8px;padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+button,select,input,textarea{font:inherit;border-radius:10px;border:1px solid #444;background:#262626;color:#eee;padding:10px}
+#bar button{flex:1;font-size:15px}
+button:disabled{opacity:.4}
+button.on{background:#166534;border-color:#4ade80}
+button.pri{background:#2563eb;border-color:#2563eb}
+dialog{width:min(92vw,460px);max-height:88vh;background:#1b1b1b;color:#eee;border:1px solid #444;border-radius:14px;padding:14px}
+dialog::backdrop{background:#000a}
+dialog label{display:block;margin:8px 0 3px;font-size:13px;color:#aaa}
+dialog input,dialog textarea,dialog select{width:100%}
+.row{display:flex;gap:8px;margin-top:12px}.row button{flex:1}
+#thumb{max-width:100%;max-height:200px;border-radius:10px;display:block;margin:auto}
+.item{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #333}
+.item img{width:56px;height:56px;object-fit:cover;border-radius:8px}
+.item div{flex:1;min-width:0}.item small{color:#aaa;display:block}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage"><video id="v" playsinline muted autoplay></video><canvas id="o"></canvas></div>
+  <div id="st">Starting…</div>
+  <div id="bar">
+    <button id="scan" disabled>🔍 Scan</button>
+    <button id="add" class="pri" disabled>📸 Add snail</button>
+    <button id="lib">📚 <span id="cnt">0</span></button>
+    <button id="flip">🔄</button>
+  </div>
+</div>
+
+<dialog id="addD">
+  <img id="thumb" alt="">
+  <div id="nf" style="font-size:12px;color:#fbbf24;text-align:center;margin-top:4px"></div>
+  <label>Who is this?</label>
+  <select id="who"><option value="new">➕ New snail</option></select>
+  <div id="newF">
+    <label>Name</label><input id="name" placeholder="Sheldon">
+    <label>Description</label><textarea id="desc" rows="3" placeholder="Big brown shell, left tentacle is chipped"></textarea>
+  </div>
+  <div class="row"><button id="cancel" type="button">Cancel</button><button id="save" type="button" class="pri">Save</button></div>
+</dialog>
+
+<dialog id="libD">
+  <b>Snail library</b>
+  <label>Match strictness: <span id="simV"></span></label>
+  <input id="sim" type="range" min="0.6" max="0.99" step="0.01" value="0.85">
+  <label>Detection sensitivity: <span id="thrV"></span></label>
+  <input id="thr" type="range" min="0.02" max="0.5" step="0.01" value="0.12">
+  <div id="list"></div>
+  <div class="row"><button id="closeLib" type="button">Close</button></div>
+</dialog>
+
+<script type="module">
+import {pipeline,AutoProcessor,CLIPVisionModelWithProjection,RawImage}
+  from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2";
+
+const $=id=>document.getElementById(id);
+const v=$('v'),o=$('o'),ctx=o.getContext('2d');
+let detector,proc,vis,snails=[],scanning=false,ready=false,last=[],facing='environment',cur=null,q=Promise.resolve();
+const status=t=>$('st').textContent=t;
+const enqueue=f=>{const p=q.then(f);q=p.catch(()=>{});return p};
+
+// ---------- storage (IndexedDB, handles tons of snails) ----------
+const dbp=new Promise((res,rej)=>{const r=indexedDB.open('snailspotter',1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('s',{keyPath:'id'});
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const tx=async(m,f)=>{const d=await dbp;return new Promise((res,rej)=>{
+  const t=d.transaction('s',m);const r=f(t.objectStore('s'));
+  t.oncomplete=()=>res(r.result);t.onerror=()=>rej(t.error)})};
+const loadAll=()=>tx('readonly',s=>s.getAll());
+const put=x=>tx('readwrite',s=>s.put(x));
+const del=id=>tx('readwrite',s=>s.delete(id));
+
+// ---------- camera ----------
+async function cam(){
+  if(v.srcObject)v.srcObject.getTracks().forEach(t=>t.stop());
+  v.srcObject=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280}},audio:false});
+  await v.play();
+}
+function frame(max=768){
+  const s=Math.min(1,max/Math.max(v.videoWidth,v.videoHeight));
+  const c=document.createElement('canvas');c.width=v.videoWidth*s|0;c.height=v.videoHeight*s|0;
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);return c;
+}
+function crop(c,b,pad=.1){
+  const bw=b.xmax-b.xmin,bh=b.ymax-b.ymin;
+  const x0=Math.max(0,b.xmin-bw*pad),y0=Math.max(0,b.ymin-bh*pad);
+  const x1=Math.min(1,b.xmax+bw*pad),y1=Math.min(1,b.ymax+bh*pad);
+  const r=document.createElement('canvas');
+  r.width=Math.max(8,(x1-x0)*c.width|0);r.height=Math.max(8,(y1-y0)*c.height|0);
+  r.getContext('2d').drawImage(c,x0*c.width,y0*c.height,r.width,r.height,0,0,r.width,r.height);return r;
+}
+
+// ---------- AI ----------
+const iou=(a,b)=>{const w=Math.max(0,Math.min(a.xmax,b.xmax)-Math.max(a.xmin,b.xmin)),h=Math.max(0,Math.min(a.ymax,b.ymax)-Math.max(a.ymin,b.ymin));
+  const i=w*h,u=(a.xmax-a.xmin)*(a.ymax-a.ymin)+(b.xmax-b.xmin)*(b.ymax-b.ymin)-i;return i/u};
+async function detect(c,thr){
+  const r=await detector(RawImage.fromCanvas(c),['a photo of a snail'],{threshold:thr,percentage:true});
+  r.sort((a,b)=>b.score-a.score);const keep=[];
+  for(const d of r)if(keep.length<4&&keep.every(k=>iou(k.box,d.box)<.4))keep.push(d);
+  return keep;
+}
+async function embed(c){
+  const inp=await proc(RawImage.fromCanvas(c));
+  const {image_embeds}=await vis(inp);
+  const a=Float32Array.from(image_embeds.data);const n=Math.hypot(...a);
+  return a.map(x=>x/n);
+}
+function match(e){
+  let best=null,bs=-1;
+  for(const s of snails)for(const m of s.embs){let d=0;for(let i=0;i<e.length;i++)d+=e[i]*m[i];if(d>bs){bs=d;best=s}}
+  return {best,bs};
+}
+
+// ---------- scanning ----------
+async function scanOnce(){
+  if(!scanning||!v.videoWidth)return;
+  const t0=performance.now(),c=frame(),sim=+$('sim').value,out=[];
+  const ds=await detect(c,+$('thr').value);
+  for(const d of ds){
+    if(!snails.length){out.push({box:d.box,name:'Snail (none saved yet)',known:false});continue}
+    const {best,bs}=match(await embed(crop(c,d.box)));
+    const known=bs>=sim;
+    out.push({box:d.box,known,name:known?best.name:'Unknown snail',desc:known?best.desc:'',pct:Math.round(bs*100)});
+  }
+  last=out;draw();
+  status(out.length?out.map(d=>d.known?`🐌 ${d.name}${d.desc?' — '+d.desc:''}`:d.name).join(' | '):`No snail seen (${((performance.now()-t0)/1000).toFixed(1)}s/scan)`);
+}
+async function loop(){while(scanning){await enqueue(scanOnce);await new Promise(r=>setTimeout(r,30))}}
+function draw(){
+  o.width=v.clientWidth;o.height=v.clientHeight;ctx.clearRect(0,0,o.width,o.height);
+  if(!scanning||!v.videoWidth)return;
+  const W=o.width,H=o.height,vw=v.videoWidth,vh=v.videoHeight,s=Math.min(W/vw,H/vh),ox=(W-vw*s)/2,oy=(H-vh*s)/2;
+  ctx.lineWidth=3;ctx.font='bold 15px system-ui';
+  for(const d of last){
+    const b=d.box,x=ox+b.xmin*vw*s,y=oy+b.ymin*vh*s,w=(b.xmax-b.xmin)*vw*s,h=(b.ymax-b.ymin)*vh*s;
+    const col=d.known?'#4ade80':'#fbbf24';ctx.strokeStyle=col;ctx.strokeRect(x,y,w,h);
+    const t=d.name+(d.pct?` ${d.pct}%`:'');const tw=ctx.measureText(t).width+10;
+    ctx.fillStyle=col;ctx.fillRect(x,Math.max(0,y-24),tw,24);ctx.fillStyle='#000';ctx.fillText(t,x+5,Math.max(17,y-6));
+  }
+}
+
+// ---------- UI ----------
+$('scan').onclick=()=>{scanning=!scanning;$('scan').classList.toggle('on',scanning);$('scan').textContent=scanning?'⏹ Stop':'🔍 Scan';
+  if(scanning)loop();else{last=[];draw();status('Scan stopped')}};
+$('flip').onclick=async()=>{facing=facing==='environment'?'user':'environment';try{await cam()}catch(e){status(e.message)}};
+
+function refreshWho(){
+  $('who').innerHTML='<option value="new">➕ New snail</option>'+snails.map(s=>`<option value="${s.id}">Add photo to: ${s.name.replace(/</g,'&lt;')}</option>`).join('');
+  $('newF').style.display='';$('cnt').textContent=snails.length;
+}
+$('who').onchange=()=>$('newF').style.display=$('who').value==='new'?'':'none';
+
+$('add').onclick=async()=>{
+  if(!v.videoWidth)return;const c=frame();status('Finding snail…');
+  const r=await enqueue(async()=>{
+    const ds=await detect(c,.05);const found=!!ds.length;
+    const cc=crop(c,found?ds[0].box:{xmin:.2,ymin:.2,xmax:.8,ymax:.8});
+    return {cc,e:await embed(cc),found};
+  });
+  const t=document.createElement('canvas');const k=200/Math.max(r.cc.width,r.cc.height);
+  t.width=r.cc.width*k|0;t.height=r.cc.height*k|0;t.getContext('2d').drawImage(r.cc,0,0,t.width,t.height);
+  cur={e:r.e,thumb:t.toDataURL('image/jpeg',.8)};
+  $('thumb').src=cur.thumb;
+  $('nf').textContent=r.found?'':'No snail box found — using the centre of the frame';
+  $('name').value='';$('desc').value='';refreshWho();$('addD').showModal();status('Ready');
+};
+$('cancel').onclick=()=>$('addD').close();
+$('save').onclick=async()=>{
+  const sel=$('who').value;let s;
+  if(sel==='new'){
+    const name=$('name').value.trim();if(!name)return $('name').focus();
+    s={id:Date.now()+'-'+Math.random().toString(36).slice(2),name,desc:$('desc').value.trim(),thumb:cur.thumb,embs:[Array.from(cur.e)]};
+    snails.push(s);
+  }else{s=snails.find(x=>x.id===sel);s.embs.push(Array.from(cur.e))}
+  await put(s);refreshWho();$('addD').close();status(`Saved ${s.name} (${s.embs.length} photo${s.embs.length>1?'s':''})`);
+};
+
+function renderLib(){
+  $('simV').textContent=$('sim').value;$('thrV').textContent=$('thr').value;
+  $('list').innerHTML=snails.length?'':'<p style="color:#aaa">No snails yet. Tap “Add snail”.</p>';
+  for(const s of snails){
+    const d=document.createElement('div');d.className='item';
+    const esc=x=>x.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    d.innerHTML=`<img src="${s.thumb}"><div><b>${esc(s.name)}</b><small>${esc(s.desc||'')}</small><small>${s.embs.length} photo(s)</small></div><button type="button">🗑</button>`;
+    d.querySelector('button').onclick=async()=>{if(confirm('Delete '+s.name+'?')){await del(s.id);snails=snails.filter(x=>x!==s);refreshWho();renderLib()}};
+    $('list').append(d);
+  }
+}
+$('lib').onclick=()=>{renderLib();$('libD').showModal()};
+$('closeLib').onclick=()=>$('libD').close();
+$('sim').oninput=$('thr').oninput=()=>{$('simV').textContent=$('sim').value;$('thrV').textContent=$('thr').value};
+addEventListener('resize',draw);
+
+// ---------- boot ----------
+(async()=>{
+  snails=await loadAll();refreshWho();
+  try{await cam()}catch(e){status('Camera error: '+e.message+' (needs https)');return}
+  const pc=p=>{if(p.status==='progress')status(`Downloading AI model… ${p.file?.split('/').pop()} ${Math.round(p.progress)}% (first run only)`)};
+  try{
+    detector=await pipeline('zero-shot-object-detection','Xenova/owlvit-base-patch32',{progress_callback:pc});
+    proc=await AutoProcessor.from_pretrained('Xenova/clip-vit-base-patch32');
+    vis=await CLIPVisionModelWithProjection.from_pretrained('Xenova/clip-vit-base-patch32',{progress_callback:pc});
+  }catch(e){status('Model load failed: '+e.message);return}
+  ready=true;$('scan').disabled=$('add').disabled=false;status('Ready — point at a snail and tap Add snail');
+})();
+</script>
+</body>
+</html>
