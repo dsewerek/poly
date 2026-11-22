@@ -1,1 +1,762 @@
-<a rel="me" href="https://mastodon.social/@dsewerek">Mastodon</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>@dsewerek</title>
+<meta name="description" content="dsewerek's links, Discord status, Minecraft, GitHub, YouTube and favourite song.">
+<meta name="theme-color" content="#f27db3">
+<meta property="og:title" content="@dsewerek">
+<meta property="og:description" content="Links, Discord status and my favourite song.">
+<meta property="og:image" content="https://haunt.gg/api/discord/avatar/6171ee834022ed5461524dc3">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://haunt.gg/api/discord/avatar/6171ee834022ed5461524dc3">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap">
+<link rel="preload" as="image" href="https://r2.haunt.gg/background/ba641f68-4646-4618-95f9-0dae61bda05b.png" fetchpriority="high">
+<style>
+  :root{
+    --void:#030303;
+    --chalk:#ffffff;
+    --haze:#dddddd;
+    --mist:#a1a1aa;
+    --blush:#f27db3;
+    --plum:#6a1b8a;
+    --glass:rgba(16,16,18,.46);
+    --glass-2:rgba(255,255,255,.07);
+    --edge:rgba(255,255,255,.10);
+    --edge-2:rgba(255,255,255,.20);
+    --font:"Satoshi", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    /* How big the Velora card is on screens 1280px+ wide. 1 = its normal 340px width. */
+    --velora-zoom:1.75;
+    color-scheme:dark;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;min-height:100svh;font-family:var(--font);font-size:1rem;line-height:1.5;color:var(--chalk);
+    background:var(--void) radial-gradient(120% 70% at 50% 0%,#2b0f24 0%,transparent 62%) fixed;
+    overflow-x:hidden;
+  }
+  body:not(.entered){overflow:hidden}
+  img{display:block;max-width:100%}
+  a{color:inherit}
+  button{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--blush);outline-offset:3px;border-radius:8px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  svg.i{width:20px;height:20px;fill:currentColor;flex:none}
+
+  /* ---------- background ---------- */
+  .backdrop{position:fixed;inset:0;z-index:-10;pointer-events:none;overflow:hidden}
+  .backdrop img{width:100%;height:100%;object-fit:cover}
+  .backdrop::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(3,3,3,.22),rgba(3,3,3,.5) 55%,rgba(3,3,3,.82))}
+
+  /* ---------- enter screen ---------- */
+  .enter{
+    position:fixed;inset:0;z-index:60;width:100%;border:0;margin:0;padding:24px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    background:rgba(3,3,3,.58);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);
+    transition:opacity .6s ease,visibility .6s;
+  }
+  .enter-word{font-size:2.5rem;font-weight:500;letter-spacing:.04em;line-height:1}
+  .enter-hint{font-size:.875rem;color:var(--mist)}
+  .enter:focus-visible{outline:none}
+  .enter:focus-visible .enter-word{outline:2px solid var(--blush);outline-offset:10px;border-radius:10px}
+  .entered .enter{opacity:0;visibility:hidden;pointer-events:none}
+
+  /* ---------- floating controls ---------- */
+  .dock{
+    position:fixed;z-index:30;top:max(14px,env(safe-area-inset-top));left:14px;
+    display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;
+    background:var(--glass);border:1px solid var(--edge);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  }
+  .icon-btn{width:38px;height:38px;display:grid;place-items:center;padding:0;border:0;border-radius:999px;background:transparent;cursor:pointer}
+  .icon-btn:hover{background:var(--glass-2)}
+  .icon-btn:disabled{opacity:.4;cursor:not-allowed}
+  .icon-btn svg.i{width:18px;height:18px}
+  .dock input[type=range]{width:86px;margin:0 12px 0 6px}
+  .ic-pause,.ic-mute{display:none}
+  .playing .ic-play{display:none}
+  .playing .ic-pause{display:block}
+  .is-muted .ic-vol{display:none}
+  .is-muted .ic-mute{display:block}
+
+  .rail{position:fixed;z-index:30;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px}
+  .rail button{position:relative;display:block;width:28px;height:18px;padding:0;border:0;background:transparent;cursor:pointer}
+  .rail button::before{content:"";position:absolute;right:0;top:50%;height:2px;width:12px;margin-top:-1px;border-radius:2px;background:rgba(255,255,255,.35);transition:width .3s ease,background-color .3s ease}
+  .rail button:hover::before{background:rgba(255,255,255,.7)}
+  .rail button[aria-current="true"]::before{width:24px;background:var(--blush)}
+  @media (max-width:760px){.rail{display:none}}
+
+  /* ---------- range inputs ---------- */
+  input[type=range]{-webkit-appearance:none;appearance:none;height:22px;margin:0;background:transparent;cursor:pointer;--p:0%}
+  input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(to right,var(--blush) var(--p),rgba(255,255,255,.2) var(--p))}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;margin-top:-5px;border:0;border-radius:50%;background:var(--chalk)}
+  input[type=range]::-moz-range-track{height:4px;border-radius:4px;background:rgba(255,255,255,.2)}
+  input[type=range]::-moz-range-progress{height:4px;border-radius:4px;background:var(--blush)}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border:0;border-radius:50%;background:var(--chalk)}
+  input[type=range]:focus-visible{outline-offset:4px}
+
+  /* ---------- sections ---------- */
+  .screen{position:relative;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:88px 20px 64px}
+
+  /* ---------- profile ---------- */
+  .profile{
+    container:card / inline-size;
+    width:100%;padding:36px 28px 22px;border-radius:28px;
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    background:var(--glass);border:2px solid var(--edge);
+    -webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%);
+  }
+  .entered .profile,.entered .below{animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+  .entered .below{animation-delay:.12s}
+  @keyframes rise{from{opacity:0;transform:translateY(14px) scale(.975)}to{opacity:1;transform:none}}
+
+  .ph{position:relative;flex:none;display:grid;place-items:center;overflow:hidden;border-radius:50%;background:rgba(255,255,255,.08);color:var(--haze);font-weight:700}
+  .ph::before{content:attr(data-letter)}
+  .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .ph img.broken{opacity:0}
+  .avatar{width:120px;height:120px;font-size:2.75rem;box-shadow:0 0 0 2px var(--edge-2)}
+
+  .name{margin:18px 0 0;font-size:2.75rem;line-height:1.1;font-weight:700;letter-spacing:.01em;overflow-wrap:anywhere}
+  .handle{margin:4px 0 0;font-size:.9375rem;color:var(--mist)}
+
+  .widgets{width:100%;margin-top:24px;display:grid;gap:12px;grid-template-columns:1fr}
+  @container card (min-width:480px){.widgets{grid-template-columns:1fr 1fr}}
+  @container card (min-width:480px) and (max-width:620px){
+    .widgets .w{padding:12px;gap:12px}
+    .widgets .dc-av .ph{width:44px;height:44px}
+    .widgets .dc-dot{width:15px;height:15px}
+    .widgets .mc-head{width:46px;height:46px}
+    .widgets .w-go{padding:6px 12px}
+  }
+  .w{min-width:0;min-height:5.5rem;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;background:var(--glass-2);border:1px solid var(--edge);text-align:left}
+  .w-body{min-width:0;flex:1}
+  .w-title,.w-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .w-title{font-weight:700;font-size:1rem;line-height:1.3}
+  .w-sub{font-size:.875rem;color:var(--haze)}
+  .w-faint{font-size:.8125rem;color:var(--mist)}
+  .w-go{flex:none;padding:7px 14px;border-radius:999px;background:var(--chalk);color:#000;font-size:.8125rem;font-weight:700;text-decoration:none;white-space:nowrap}
+  .w-go:hover{background:var(--haze)}
+
+  .dc-av{position:relative;flex:none}
+  .dc-av .ph{width:56px;height:56px;font-size:1.25rem}
+  .dc-dot{position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;border-radius:50%;background:#80848e;box-shadow:0 0 0 3px #19191c}
+  .dc-dot[hidden]{display:none}
+  .dc-dot[data-status=online]{background:#23a55a}
+  .dc-dot[data-status=idle]{background:#f0b232}
+  .dc-dot[data-status=dnd]{background:#f23f43}
+  .dc-art{width:48px;height:48px;flex:none;border-radius:10px;object-fit:cover}
+  .dc-art[hidden]{display:none}
+
+  .mc-head{width:58px;height:58px;flex:none;image-rendering:pixelated}
+  .chip{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:3px 10px;border-radius:999px;border:1px solid var(--edge);background:transparent;font-size:.8125rem;color:var(--haze);cursor:pointer;font-variant-numeric:tabular-nums}
+  .chip:hover{border-color:var(--edge-2);color:var(--chalk)}
+  .chip svg.i{width:14px;height:14px}
+  .chip[hidden]{display:none}
+
+  .links{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+  .links a{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:12px;color:var(--c);text-decoration:none;transition:transform .2s ease}
+  .links a:hover{transform:scale(1.08)}
+  .links svg,.links img{width:34px;height:34px;fill:currentColor;filter:drop-shadow(0 0 3px var(--c))}
+  .links .letter{font-weight:900;font-size:1.25rem;color:#c58ae0}
+  .links a::after{
+    content:attr(data-label);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translate(-50%,4px);
+    padding:5px 10px;border-radius:8px;background:rgba(10,10,12,.94);border:1px solid var(--edge);
+    color:var(--chalk);font-size:.75rem;font-weight:500;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;
+  }
+  .links a:hover::after,.links a:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+
+  .meta{align-self:flex-start;margin-top:20px;display:flex;align-items:center;gap:6px;font-size:.875rem;color:var(--haze)}
+  .meta svg.i{width:16px;height:16px}
+
+  .below{width:100%;margin-top:12px;display:grid;gap:12px;grid-template-columns:1fr}
+  @container col (min-width:520px){.below{grid-template-columns:1fr 1fr}}
+  .below .w{border-radius:22px;background:var(--glass);border:2px solid var(--edge);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+  .gh-av{width:52px;height:52px;font-size:1.25rem}
+  .gh-stats{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:2px;font-size:.8125rem;color:var(--mist)}
+  .gh-stats b{color:var(--chalk);font-weight:700;font-variant-numeric:tabular-nums}
+  .yt-tile{width:52px;height:52px;flex:none;display:grid;place-items:center;border-radius:14px;background:rgba(255,0,0,.12);color:#ff0000}
+  .yt-tile svg.i{width:30px;height:30px}
+
+  .scroll-hint{margin-top:28px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.8125rem;color:var(--haze);text-decoration:none}
+  .scroll-hint svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .scroll-hint:hover{color:var(--chalk)}
+
+  /* ---------- hero: Velora card + profile, both on the first screen ---------- */
+  .hero{overflow:hidden;overflow:clip}
+  .hero-grid{width:min(100%,77.5rem);display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:center}
+  .profile-col{container:col / inline-size;width:min(100%,44rem);justify-self:center}
+  @media (min-width:1100px){
+    .hero-grid{grid-template-columns:minmax(0,1fr) 32.5rem;gap:48px}
+    .profile-col{width:100%}
+  }
+  @media (min-width:1280px){.hero-grid{grid-template-columns:minmax(0,1fr) 36rem}}
+
+  /* spotlight on the Velora card */
+  .stage{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0 64px}
+  .stage::before{content:"";position:absolute;z-index:-3;left:50%;top:-160px;bottom:-40px;width:min(900px,140vw);transform:translateX(-50%);
+    background:radial-gradient(50% 55% at 50% 52%,rgba(3,3,3,.6),transparent 78%)}
+  .beam{position:absolute;top:-260px;bottom:0;left:50%;width:min(900px,150vw);transform:translateX(-50%);z-index:-2;
+    filter:blur(22px);opacity:0;transition:opacity 1.4s ease .15s}
+  .beam::before{content:"";position:absolute;inset:0;
+    background:linear-gradient(to bottom,rgba(255,236,246,.34),rgba(242,125,179,.17) 50%,rgba(106,27,138,.08) 78%,transparent);
+    clip-path:polygon(44% 0,56% 0,88% 100%,12% 100%)}
+  .velora-wrap{position:relative;width:100%;display:flex;flex-direction:column;align-items:center}
+  .velora-wrap::after{content:"";position:absolute;left:50%;bottom:-56px;width:min(820px,140vw);height:150px;transform:translateX(-50%);z-index:-1;border-radius:50%;
+    background:radial-gradient(closest-side,rgba(242,125,179,.42),rgba(106,27,138,.2) 58%,transparent);opacity:0;transition:opacity 1.6s ease .35s}
+  .stage.lit .beam,.stage.lit .velora-wrap::after{opacity:1}
+  .velora-wrap velora-card{max-width:100%;filter:drop-shadow(0 28px 50px rgba(242,125,179,.22))}
+  @media (min-width:520px){.velora-wrap velora-card{zoom:1.3}}
+  @media (min-width:1100px){.velora-wrap velora-card{zoom:1.4}}
+  @media (min-width:1280px){.velora-wrap velora-card{zoom:var(--velora-zoom)}}
+  .velora-note{margin:20px 0 0;color:var(--haze);font-size:.9375rem;text-align:center}
+  .velora-note[hidden]{display:none}
+
+  /* ---------- song ---------- */
+  .song-inner{width:min(100%,58rem)}
+  .song h2{margin:0 0 16px;text-align:right;font-size:1.75rem;line-height:1.2;font-weight:700}
+  .record{
+    display:grid;grid-template-columns:1fr;gap:28px;padding:24px;border-radius:28px;overflow:hidden;
+    background:var(--glass);border:2px solid var(--edge);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  }
+  @media (min-width:760px){.record{grid-template-columns:300px 1fr;gap:72px;align-items:center;padding:28px 40px 28px 28px}}
+  .sleeve{position:relative;width:100%;max-width:300px;aspect-ratio:1;margin-inline:auto}
+  @media (max-width:759px){.sleeve{max-width:240px;margin-inline:auto 30%}}
+  .sleeve .cover{position:relative;z-index:1;width:100%;height:100%;border-radius:14px;font-size:3rem}
+  .sleeve .cover img{border-radius:14px}
+  .vinyl{position:absolute;inset:4%;border-radius:50%;transition:transform .8s cubic-bezier(.2,.7,.2,1);
+    background:
+      radial-gradient(circle,var(--blush) 0 9%,#0d0d0d 9.5% 11%,transparent 11.5%),
+      conic-gradient(from 30deg,rgba(255,255,255,.07),transparent 18%,rgba(255,255,255,.05) 50%,transparent 68%,rgba(255,255,255,.07)),
+      repeating-radial-gradient(circle,#111 0 2px,#1a1a1a 2px 3px);
+    box-shadow:0 0 0 1px rgba(255,255,255,.06)}
+  .playing .vinyl{transform:translateX(22%)}
+  .track-title{margin:0;font-size:2.75rem;line-height:1.05;font-weight:900;letter-spacing:-.01em}
+  .track-artist{margin:6px 0 0;font-size:1.25rem;font-weight:500;color:var(--haze)}
+  .seek{margin-top:28px}
+  .seek input{width:100%}
+  .times{display:flex;justify-content:space-between;margin-top:2px;font-size:.8125rem;color:var(--mist);font-variant-numeric:tabular-nums}
+  .controls{display:flex;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .play-big{width:60px;height:60px;display:grid;place-items:center;padding:0;border:0;border-radius:50%;background:var(--chalk);color:#000;cursor:pointer}
+  .play-big:hover{background:var(--haze)}
+  .play-big:disabled{opacity:.4;cursor:not-allowed}
+  .play-big svg.i{width:26px;height:26px}
+  .loop-btn{width:44px;height:44px;color:var(--mist)}
+  .loop-btn[aria-pressed="true"]{color:var(--blush)}
+  .spotify{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;border:1px solid var(--edge-2);font-size:.9375rem;font-weight:500;text-decoration:none}
+  .spotify:hover{background:var(--glass-2)}
+  .spotify svg.i{fill:#1ed760}
+  .song-status{margin:12px 0 0;font-size:.875rem;color:var(--haze)}
+  .song-status[hidden]{display:none}
+
+  .site-foot{display:flex;justify-content:center;padding:0 20px 36px;font-size:.8125rem}
+  .site-foot a{color:var(--mist);text-decoration:none}
+  .site-foot a:hover{color:var(--chalk);text-decoration:underline}
+
+  @media (max-width:420px){
+    .profile{padding:30px 18px 18px}
+    .name{font-size:2.25rem}
+    .track-title{font-size:2.25rem}
+    .dock input[type=range]{width:64px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation-duration:.001ms!important;animation-delay:0s!important;transition-duration:.001ms!important;transition-delay:0s!important}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l10.6-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14Z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4.2" height="15" rx="1.3"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1.3"/></symbol>
+  <symbol id="i-vol" viewBox="0 0 24 24"><path d="M3.5 9.2v5.6c0 .5.4.9.9.9h3.2l4.6 3.9c.6.5 1.5.1 1.5-.7V5.1c0-.8-.9-1.2-1.5-.7L7.6 8.3H4.4c-.5 0-.9.4-.9.9Z"/><path d="M16.3 8.4a5 5 0 0 1 0 7.2M18.9 5.8a8.6 8.6 0 0 1 0 12.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M3.5 9.2v5.6c0 .5.4.9.9.9h3.2l4.6 3.9c.6.5 1.5.1 1.5-.7V5.1c0-.8-.9-1.2-1.5-.7L7.6 8.3H4.4c-.5 0-.9.4-.9.9Z"/><path d="m16.5 9.5 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-loop" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12"/><path d="m7 22-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/></g></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></g></symbol>
+  <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></symbol>
+  <symbol id="i-youtube" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></symbol>
+  <symbol id="i-discord" viewBox="0 0 24 24"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></symbol>
+  <symbol id="i-mastodon" viewBox="0 0 24 24"><path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.224-.124 4.768-.422.038-.008.077-.015.11-.024 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.668-1.67 1.977v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.5 2.962 1.498l.638 1.06.638-1.06c.66-.999 1.65-1.498 2.96-1.498 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z"/></symbol>
+  <symbol id="i-reddit" viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></symbol>
+  <symbol id="i-roblox" viewBox="0 0 24 24"><path d="M18.926 23.998 0 18.892 5.075.002 24 5.108ZM15.348 10.09l-5.282-1.453-1.414 5.273 5.282 1.453z"/></symbol>
+  <symbol id="i-namemc" viewBox="0 0 24 24"><path d="M12 1.8 2.8 7v10L12 22.2 21.2 17V7L12 1.8Zm0 2.3L18.7 8 12 11.8 5.3 8 12 4.1ZM4.8 9.7l6.2 3.5v6.6l-6.2-3.5V9.7Zm8.2 10.1v-6.6l6.2-3.5v6.6L13 19.8Z"/></symbol>
+  <symbol id="i-spotify" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></symbol>
+</svg>
+
+<div class="backdrop" aria-hidden="true">
+  <img id="bgImg" src="https://r2.haunt.gg/background/ba641f68-4646-4618-95f9-0dae61bda05b.png" alt="" fetchpriority="high" decoding="async">
+</div>
+
+<button class="enter" id="enter" type="button">
+  <span class="enter-word">enter</span>
+  <span class="enter-hint">Plays music at low volume</span>
+</button>
+
+<div id="site" inert>
+
+  <div class="dock" role="group" aria-label="Music">
+    <button class="icon-btn" type="button" data-play aria-label="Play song">
+      <svg class="i ic-play" aria-hidden="true"><use href="#i-play"/></svg>
+      <svg class="i ic-pause" aria-hidden="true"><use href="#i-pause"/></svg>
+    </button>
+    <button class="icon-btn" id="muteBtn" type="button" aria-label="Mute" aria-pressed="false">
+      <svg class="i ic-vol" aria-hidden="true"><use href="#i-vol"/></svg>
+      <svg class="i ic-mute" aria-hidden="true"><use href="#i-mute"/></svg>
+    </button>
+    <input id="vol" type="range" min="0" max="100" step="1" value="10" aria-label="Volume">
+  </div>
+
+  <nav class="rail" id="rail" aria-label="Sections"></nav>
+
+  <main id="main">
+
+    <!-- ===== First screen: Velora card + profile ===== -->
+    <section class="screen hero" id="profile" data-nav-label="Profile">
+      <div class="hero-grid">
+
+      <!-- Velora card, big, under a spotlight -->
+      <div class="stage" id="stage">
+        <div class="beam" aria-hidden="true"></div>
+        <div class="velora-wrap">
+          <script defer src="https://nookara.cc/embed.js?v=2.0.1"></script>
+          <velora-card account="dsewerek"></velora-card>
+        </div>
+        <p class="velora-note" id="veloraNote" hidden>The card couldn't load. Refresh the page to try again.</p>
+      </div>
+
+      <div class="profile-col">
+      <article class="profile">
+        <div class="ph avatar" data-letter="d">
+          <img src="https://haunt.gg/api/discord/avatar/6171ee834022ed5461524dc3" alt="dsewerek's avatar" width="120" height="120" data-ph>
+        </div>
+        <h1 class="name"><span aria-hidden="true">𝐝𝐬𝐞𝐰𝐞𝐫𝐞𝐤</span><span class="sr-only">dsewerek</span></h1>
+        <p class="handle">@dsewerek</p>
+
+        <div class="widgets">
+          <!-- Discord presence (live via Lanyard) -->
+          <div class="w" id="discord">
+            <div class="dc-av">
+              <div class="ph" data-letter="d">
+                <img id="dcAv" src="https://haunt.gg/api/discord/avatar/6171ee834022ed5461524dc3" alt="" width="56" height="56" data-ph>
+              </div>
+              <span class="dc-dot" id="dcDot" hidden><span class="sr-only" id="dcStatusText"></span></span>
+            </div>
+            <div class="w-body">
+              <div class="w-title" id="dcName">dsewerek</div>
+              <div class="w-sub" id="dcAct">Currently doing nothing</div>
+              <div class="w-faint w-sub" id="dcSub" hidden></div>
+            </div>
+            <img class="dc-art" id="dcArt" alt="" width="48" height="48" hidden>
+          </div>
+
+          <!-- Minecraft -->
+          <div class="w" id="minecraft">
+            <img class="mc-head" id="mcHead" src="https://mc-heads.net/head/dsewerek/116" alt="dsewerek's Minecraft head" width="58" height="58" loading="lazy">
+            <div class="w-body">
+              <div class="w-title">dsewerek</div>
+              <div class="w-faint">Minecraft</div>
+              <button class="chip" id="mcCopy" type="button" hidden>
+                <svg class="i" aria-hidden="true"><use href="#i-copy"/></svg>
+                <span id="mcCopyLabel">Copy UUID</span>
+              </button>
+            </div>
+            <a class="w-go" href="https://namemc.com/profile/dsewerek.1" target="_blank" rel="noopener">View</a>
+          </div>
+        </div>
+
+        <ul class="links">
+          <li><a href="https://guns.lol/dsewerek" target="_blank" rel="noopener" data-label="guns.lol" aria-label="guns.lol" style="--c:#6a1b8a">
+            <img id="gunsIcon" src="https://r2.haunt.gg/link/8b5dc7e2-e9fe-4342-bc7d-cce4da30cab0.webp" alt="" width="34" height="34" loading="lazy">
+          </a></li>
+          <li><a href="https://youtube.com/@dsewerek" target="_blank" rel="noopener" data-label="YouTube" aria-label="YouTube" style="--c:#ff0000">
+            <svg aria-hidden="true"><use href="#i-youtube"/></svg></a></li>
+          <li><a href="https://discord.gg/C4UDJWXhnK" target="_blank" rel="noopener" data-label="Discord server" aria-label="Discord server" style="--c:#5865f2">
+            <svg aria-hidden="true"><use href="#i-discord"/></svg></a></li>
+          <li><a href="https://mastodon.social/@dsewerek" target="_blank" rel="me noopener" data-label="Mastodon" aria-label="Mastodon" style="--c:#6364ff">
+            <svg aria-hidden="true"><use href="#i-mastodon"/></svg></a></li>
+          <li><a href="https://github.com/dsewerek" target="_blank" rel="noopener" data-label="GitHub: dsewerek" aria-label="GitHub: dsewerek" style="--c:#ffffff">
+            <svg aria-hidden="true"><use href="#i-github"/></svg></a></li>
+          <li><a href="https://github.com/ciabidev" target="_blank" rel="noopener" data-label="GitHub: ciabidev" aria-label="GitHub: ciabidev" style="--c:#ffffff">
+            <svg aria-hidden="true"><use href="#i-github"/></svg></a></li>
+          <li><a href="https://reddit.com/user/Due-Comparison-3108" target="_blank" rel="noopener" data-label="Reddit" aria-label="Reddit" style="--c:#ff4500">
+            <svg aria-hidden="true"><use href="#i-reddit"/></svg></a></li>
+          <li><a href="https://namemc.com/profile/dsewerek.1" target="_blank" rel="noopener" data-label="NameMC" aria-label="NameMC" style="--c:#d9d9d9">
+            <svg aria-hidden="true"><use href="#i-namemc"/></svg></a></li>
+          <li><a href="https://roblox.com/users/9928358613/profile" target="_blank" rel="noopener" data-label="Roblox" aria-label="Roblox" style="--c:#97a6b4">
+            <svg aria-hidden="true"><use href="#i-roblox"/></svg></a></li>
+        </ul>
+
+        <div class="meta">
+          <svg class="i" aria-hidden="true"><use href="#i-pin"/></svg>
+          <span><span class="sr-only">Location: </span>planet earth</span>
+        </div>
+      </article>
+
+      <div class="below">
+        <!-- GitHub -->
+        <div class="w" id="github">
+          <div class="ph gh-av" data-letter="d">
+            <img id="ghAv" src="https://github.com/dsewerek.png?size=104" alt="" width="52" height="52" loading="lazy" data-ph>
+          </div>
+          <div class="w-body">
+            <div class="w-title" id="ghName">dsewerek</div>
+            <div class="gh-stats" id="ghStats">
+              <span><b id="ghRepos">–</b> repos</span>
+              <span><b id="ghFollowers">–</b> followers</span>
+              <span><b id="ghFollowing">–</b> following</span>
+            </div>
+          </div>
+          <a class="w-go" href="https://github.com/dsewerek" target="_blank" rel="noopener">View</a>
+        </div>
+
+        <!-- YouTube -->
+        <div class="w" id="youtube">
+          <div class="yt-tile"><svg class="i" aria-hidden="true"><use href="#i-youtube"/></svg></div>
+          <div class="w-body">
+            <div class="w-title">@dsewerek</div>
+            <div class="w-faint">YouTube channel</div>
+          </div>
+          <a class="w-go" href="https://youtube.com/@dsewerek" target="_blank" rel="noopener">View</a>
+        </div>
+      </div>
+      </div><!-- /.profile-col -->
+
+      </div><!-- /.hero-grid -->
+
+      <a class="scroll-hint" href="#song">
+        <span>Scroll for more</span>
+        <svg aria-hidden="true"><use href="#i-down"/></svg>
+      </a>
+    </section>
+
+    <!-- ===== Favourite song ===== -->
+    <section class="screen song" id="song" data-nav-label="Favourite song">
+      <div class="song-inner">
+        <h2>my FAV song</h2>
+        <div class="record">
+          <div class="sleeve">
+            <div class="vinyl" aria-hidden="true"></div>
+            <div class="ph cover" data-letter="♪">
+              <img src="https://r2.haunt.gg/audio/cover/bfb6326c-2c82-4acb-8c82-0c472e1da79b.jpg" alt="Cover art for Revolution" loading="lazy" data-ph>
+            </div>
+          </div>
+          <div class="track">
+            <h3 class="track-title">Revolution</h3>
+            <p class="track-artist">Måns Zelmerlöw</p>
+            <div class="seek">
+              <input id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Song position">
+              <div class="times"><span id="cur">0:00</span><span id="dur">3:00</span></div>
+            </div>
+            <div class="controls">
+              <button class="play-big" type="button" data-play aria-label="Play song">
+                <svg class="i ic-play" aria-hidden="true"><use href="#i-play"/></svg>
+                <svg class="i ic-pause" aria-hidden="true"><use href="#i-pause"/></svg>
+              </button>
+              <button class="icon-btn loop-btn" id="loopBtn" type="button" aria-label="Repeat song" aria-pressed="false">
+                <svg class="i" aria-hidden="true"><use href="#i-loop"/></svg>
+              </button>
+              <a class="spotify" href="https://open.spotify.com/track/1xYhFfJInHS8hsGfrJW4lI" target="_blank" rel="noopener">
+                <svg class="i" aria-hidden="true"><use href="#i-spotify"/></svg>
+                Listen on Spotify
+              </a>
+            </div>
+            <p class="song-status" id="songStatus" role="status" hidden></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-foot">
+    <a rel="me" href="https://mastodon.social/@dsewerek">Mastodon</a>
+  </footer>
+</div>
+
+<audio id="audio" src="https://r2.haunt.gg/audio/f567a5e8-b543-4106-aa87-10cf761d7d6c.mp3" preload="auto"></audio>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  /* ---------- image fallbacks ---------- */
+  $$('img[data-ph]').forEach(img => {
+    const fail = () => img.classList.add('broken');
+    img.addEventListener('error', fail);
+    img.addEventListener('load', () => img.classList.remove('broken'));
+    if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) fail();
+  });
+  const onFail = (img, fn) => {
+    if (!img) return;
+    let done = false;
+    const run = () => { if (!done) { done = true; fn(img); } };
+    img.addEventListener('error', run, { once: true });
+    if (img.complete && img.naturalWidth === 0) run();
+  };
+  onFail($('#bgImg'), img => img.remove());
+  onFail($('#mcHead'), img => { img.style.visibility = 'hidden'; });
+  onFail($('#gunsIcon'), img => {
+    const s = document.createElement('span');
+    s.className = 'letter'; s.textContent = 'g'; s.setAttribute('aria-hidden', 'true');
+    img.replaceWith(s);
+  });
+
+  /* ---------- enter ---------- */
+  const site = $('#site');
+  const enterBtn = $('#enter');
+  const audio = $('#audio');
+  function play() { const p = audio.play(); if (p && p.catch) p.catch(() => {}); }
+  enterBtn.addEventListener('click', () => {
+    if (document.body.classList.contains('entered')) return;
+    document.body.classList.add('entered');
+    site.removeAttribute('inert');
+    enterBtn.tabIndex = -1;
+    enterBtn.setAttribute('aria-hidden', 'true');
+    play();
+  });
+
+  /* ---------- audio ---------- */
+  const playBtns = $$('[data-play]');
+  const muteBtn = $('#muteBtn');
+  const vol = $('#vol');
+  const seek = $('#seek');
+  const cur = $('#cur');
+  const dur = $('#dur');
+  const loopBtn = $('#loopBtn');
+  const songStatus = $('#songStatus');
+
+  let v = parseFloat(store.get('dsw-vol'));
+  if (!Number.isFinite(v) || v < 0 || v > 1) v = 0.1;
+  audio.volume = v;
+  audio.muted = store.get('dsw-muted') === '1';
+
+  const fmt = s => {
+    if (!Number.isFinite(s)) return '0:00';
+    s = Math.max(0, Math.floor(s));
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  };
+  const setFill = (el, pct) => el.style.setProperty('--p', pct + '%');
+
+  function syncPlay() {
+    const on = !audio.paused && !audio.ended;
+    document.body.classList.toggle('playing', on);
+    playBtns.forEach(b => b.setAttribute('aria-label', on ? 'Pause song' : 'Play song'));
+  }
+  function syncVol() {
+    const silent = audio.muted || audio.volume === 0;
+    const val = silent ? 0 : Math.round(audio.volume * 100);
+    vol.value = val;
+    setFill(vol, val);
+    muteBtn.classList.toggle('is-muted', silent);
+    muteBtn.setAttribute('aria-label', silent ? 'Unmute' : 'Mute');
+    muteBtn.setAttribute('aria-pressed', String(silent));
+  }
+  let dragging = false;
+  function syncTime() {
+    const d = audio.duration;
+    if (Number.isFinite(d) && d > 0) dur.textContent = fmt(d);
+    if (dragging) return;
+    cur.textContent = fmt(audio.currentTime);
+    if (Number.isFinite(d) && d > 0) {
+      const p = audio.currentTime / d * 100;
+      seek.value = Math.round(p * 10);
+      setFill(seek, p);
+    }
+  }
+
+  playBtns.forEach(b => b.addEventListener('click', () => (audio.paused ? play() : audio.pause())));
+  muteBtn.addEventListener('click', () => {
+    if (audio.muted || audio.volume === 0) {
+      audio.muted = false;
+      if (audio.volume === 0) audio.volume = 0.1;
+    } else {
+      audio.muted = true;
+    }
+  });
+  vol.addEventListener('input', () => {
+    const x = vol.value / 100;
+    audio.volume = x;
+    audio.muted = x === 0;
+    setFill(vol, vol.value);
+  });
+  seek.addEventListener('input', () => {
+    dragging = true;
+    setFill(seek, seek.value / 10);
+    const d = audio.duration;
+    if (Number.isFinite(d)) cur.textContent = fmt(seek.value / 1000 * d);
+  });
+  seek.addEventListener('change', () => {
+    const d = audio.duration;
+    if (Number.isFinite(d)) audio.currentTime = seek.value / 1000 * d;
+    dragging = false;
+  });
+  loopBtn.addEventListener('click', () => {
+    audio.loop = !audio.loop;
+    loopBtn.setAttribute('aria-pressed', String(audio.loop));
+  });
+
+  ['play', 'pause', 'ended'].forEach(e => audio.addEventListener(e, syncPlay));
+  ['timeupdate', 'loadedmetadata', 'durationchange', 'seeked'].forEach(e => audio.addEventListener(e, syncTime));
+  audio.addEventListener('volumechange', () => {
+    syncVol();
+    store.set('dsw-vol', String(audio.volume));
+    store.set('dsw-muted', audio.muted ? '1' : '0');
+  });
+  audio.addEventListener('error', () => {
+    songStatus.textContent = "The song couldn't load. You can still play it on Spotify.";
+    songStatus.hidden = false;
+    playBtns.forEach(b => { b.disabled = true; });
+  });
+  syncVol();
+  syncPlay();
+
+  /* ---------- section rail ---------- */
+  const sections = $$('main > section');
+  const rail = $('#rail');
+  sections.forEach(s => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-label', s.dataset.navLabel || s.id);
+    b.addEventListener('click', () => s.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' }));
+    rail.append(b);
+  });
+  const railBtns = $$('button', rail);
+  const markActive = i => railBtns.forEach((b, j) => b.setAttribute('aria-current', String(i === j)));
+  markActive(0);
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) markActive(sections.indexOf(e.target)); });
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    sections.forEach(s => io.observe(s));
+  }
+
+  /* ---------- stage light: turns on as you enter ---------- */
+  const stage = $('#stage');
+  if (reduceMotion) stage.classList.add('lit');
+  enterBtn.addEventListener('click', () => stage.classList.add('lit'));
+
+  /* ---------- Velora card check ---------- */
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      if (!window.customElements || !customElements.get('velora-card')) $('#veloraNote').hidden = false;
+    }, 6000);
+  });
+
+  /* ---------- tab title typewriter ---------- */
+  const T = '@dsewerek';
+  let n = 1, dir = 1;
+  (function tick() {
+    document.title = T.slice(0, n);
+    let wait = dir > 0 ? 160 : 90;
+    if (n === T.length && dir > 0) { dir = -1; wait = 1800; }
+    else if (n === 1 && dir < 0) { dir = 1; wait = 500; }
+    n += dir;
+    setTimeout(tick, wait);
+  })();
+
+  /* ---------- Discord presence (Lanyard) ---------- */
+  const DISCORD_ID = '1292535443619053580';
+  const STATUS = { online: 'Online', idle: 'Idle', dnd: 'Do not disturb', offline: 'Offline' };
+  const VERB = { 0: 'Playing', 1: 'Streaming', 2: 'Listening to', 3: 'Watching', 5: 'Competing in' };
+  const dcArt = $('#dcArt');
+  dcArt.addEventListener('error', () => { dcArt.hidden = true; });
+
+  function assetUrl(a) {
+    const li = a && a.assets && a.assets.large_image;
+    if (!li) return null;
+    if (li.startsWith('mp:external/')) return 'https://media.discordapp.net/external/' + li.slice(12);
+    if (li.startsWith('spotify:')) return 'https://i.scdn.co/image/' + li.slice(8);
+    if (a.application_id) return 'https://cdn.discordapp.com/app-assets/' + a.application_id + '/' + li + '.png';
+    return null;
+  }
+  async function loadDiscord() {
+    try {
+      const r = await fetch('https://api.lanyard.rest/v1/users/' + DISCORD_ID, { cache: 'no-store' });
+      const j = await r.json();
+      if (!j || !j.success || !j.data) return;
+      const d = j.data;
+      const u = d.discord_user || {};
+      if (u.avatar) {
+        $('#dcAv').src = 'https://cdn.discordapp.com/avatars/' + u.id + '/' + u.avatar + '.' + (u.avatar.startsWith('a_') ? 'gif' : 'png') + '?size=128';
+      }
+      if (u.username) $('#dcName').textContent = u.username;
+
+      const st = STATUS[d.discord_status] ? d.discord_status : 'offline';
+      const dot = $('#dcDot');
+      dot.dataset.status = st;
+      dot.title = STATUS[st];
+      dot.hidden = false;
+      $('#dcStatusText').textContent = STATUS[st];
+
+      const acts = Array.isArray(d.activities) ? d.activities : [];
+      const custom = acts.find(a => a.type === 4);
+      const main = acts.find(a => a.type !== 4);
+      let line = '', sub = '', art = null;
+      if (d.listening_to_spotify && d.spotify) {
+        line = 'Listening to ' + d.spotify.song;
+        sub = 'by ' + d.spotify.artist;
+        art = d.spotify.album_art_url;
+      } else if (main) {
+        line = ((VERB[main.type] || '') + ' ' + main.name).trim();
+        sub = main.details || main.state || '';
+        art = assetUrl(main);
+      } else if (custom && custom.state) {
+        line = custom.state;
+      }
+      $('#dcAct').textContent = line || 'Currently doing nothing';
+      const subEl = $('#dcSub');
+      subEl.textContent = sub;
+      subEl.hidden = !sub;
+      if (art) { dcArt.src = art; dcArt.hidden = false; } else { dcArt.hidden = true; }
+    } catch (e) { /* keep the fallback text */ }
+  }
+  loadDiscord();
+  setInterval(loadDiscord, 30000);
+
+  /* ---------- GitHub ---------- */
+  const nf = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
+  fetch('https://api.github.com/users/dsewerek')
+    .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+    .then(u => {
+      if (u.name) $('#ghName').textContent = u.name;
+      $('#ghRepos').textContent = nf.format(u.public_repos || 0);
+      $('#ghFollowers').textContent = nf.format(u.followers || 0);
+      $('#ghFollowing').textContent = nf.format(u.following || 0);
+    })
+    .catch(() => { $('#ghStats').textContent = "Stats didn't load. Open the profile to see them."; });
+
+  /* ---------- Minecraft UUID ---------- */
+  fetch('https://playerdb.co/api/player/minecraft/dsewerek')
+    .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+    .then(j => {
+      const id = j && j.data && j.data.player && j.data.player.id;
+      if (!id) return;
+      const btn = $('#mcCopy');
+      const label = $('#mcCopyLabel');
+      const idle = 'UUID ' + id.slice(0, 8);
+      label.textContent = idle;
+      btn.setAttribute('aria-label', 'Copy Minecraft UUID ' + id);
+      btn.hidden = false;
+      let t;
+      btn.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(id); label.textContent = 'Copied UUID'; }
+        catch (e) { label.textContent = id; }
+        clearTimeout(t);
+        t = setTimeout(() => { label.textContent = idle; }, 2200);
+      });
+    })
+    .catch(() => {});
+})();
+</script>
+</body>
+</html>
